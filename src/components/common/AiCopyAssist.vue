@@ -14,203 +14,218 @@
 			AI 幫寫
 		</div>
 
-		<div
-			v-if="feedback.visible"
-			class="ai-feedback"
-			:class="{ 'fb-card': feedback.phase === 'reasons' }">
-			<template v-if="feedback.phase === 'ask'">
-				<span class="fb-ask-text">這個「{{ fieldLabel }}」建議對您有幫助嗎？</span>
-				<span class="fb-btn-group">
-					<a-button
-						class="fb-btn"
-						@click="markSatisfied">
-						<smile-two-tone />
-						滿意
-					</a-button>
-					<a-button
-						class="fb-btn"
-						@click="markUnsatisfied">
-						<frown-two-tone />
-						不滿意
-					</a-button>
-				</span>
-			</template>
-			<template v-else-if="feedback.phase === 'reasons'">
-				<div class="fb-reasons-title">
-					不滿意原因為何？（可複選）
-				</div>
-				<div class="fb-reasons-list">
-					<button
-						v-for="reason in feedbackReasonOptions"
-						:key="reason"
-						type="button"
-						class="fb-reason-chip"
-						:class="{ active: feedback.reasons.includes(reason) }"
-						@click="toggleFeedbackReason(reason)">
-						{{ reason }}
-					</button>
-				</div>
-				<a-textarea
-					v-model:value="feedback.text"
-					class="fb-text-input"
-					:auto-size="{ minRows: 2, maxRows: 4 }"
-					:maxlength="50"
-					show-count
-					placeholder="其他回饋" />
-				<div class="fb-submit-row">
-					<a-button
-						type="text"
-						class="fb-skip-btn"
-						@click="skipFeedback">
-						略過
-					</a-button>
-					<a-button @click="submitFeedback">
-						送出回饋
-					</a-button>
-				</div>
-			</template>
-			<template v-else>
-				<span class="fb-thanks">
-					<check-outlined />
-					感謝你的回饋！
-				</span>
-			</template>
-		</div>
-
-		<div
-			v-if="state === 'panelOpen'"
-			class="ai-panel">
-			<div class="ai-panel-head">
-				<svg
-					viewBox="0 0 16 16"
-					fill="currentColor"
-					v-html="icons.sparkle" />
-				AI 幫寫 · {{ fieldLabel }}
+		<transition
+			@before-enter="onExpandBeforeEnter"
+			@enter="onExpandEnter"
+			@leave="onExpandLeave">
+			<div
+				v-if="feedback.visible"
+				class="ai-feedback"
+				:class="{ 'fb-card': feedback.phase === 'reasons' }">
+				<template v-if="feedback.phase === 'ask'">
+					<span class="fb-ask-text">這個「{{ fieldLabel }}」建議對您有幫助嗎？</span>
+					<span class="fb-btn-group">
+						<a-button
+							class="fb-btn"
+							@click="markSatisfied">
+							<smile-two-tone />
+							滿意
+						</a-button>
+						<a-button
+							class="fb-btn"
+							@click="markUnsatisfied">
+							<frown-two-tone />
+							不滿意
+						</a-button>
+					</span>
+				</template>
+				<template v-else-if="feedback.phase === 'reasons'">
+					<div class="fb-reasons-title">
+						不滿意原因為何？（可複選）
+					</div>
+					<div class="fb-reasons-list">
+						<button
+							v-for="reason in feedbackReasonOptions"
+							:key="reason"
+							type="button"
+							class="fb-reason-chip"
+							:class="{ active: feedback.reasons.includes(reason) }"
+							@click="toggleFeedbackReason(reason)">
+							{{ reason }}
+						</button>
+					</div>
+					<a-textarea
+						v-model:value="feedback.text"
+						class="fb-text-input"
+						:auto-size="{ minRows: 2, maxRows: 4 }"
+						:maxlength="50"
+						show-count
+						placeholder="其他回饋" />
+					<div class="fb-submit-row">
+						<a-button
+							type="text"
+							class="fb-skip-btn"
+							@click="skipFeedback">
+							略過
+						</a-button>
+						<a-button @click="submitFeedback">
+							送出回饋
+						</a-button>
+					</div>
+				</template>
+				<template v-else>
+					<span class="fb-thanks">
+						<check-outlined />
+						感謝你的回饋！
+					</span>
+				</template>
 			</div>
-			<div class="ai-panel-body">
-				<label class="ai-field-label"><span class="required">*</span>請提供商品相關素材（描述/地點/網址）</label>
-				<!-- 這個元件常被放在外層頁面「真正欄位」的 a-form-item 裡（例如商品名稱），
+		</transition>
+
+		<transition
+			@before-enter="onExpandBeforeEnter"
+			@enter="onExpandEnter"
+			@leave="onExpandLeave">
+			<div
+				v-if="state === 'panelOpen'"
+				class="ai-panel">
+				<div class="ai-panel-head">
+					<svg
+						viewBox="0 0 16 16"
+						fill="currentColor"
+						v-html="icons.sparkle" />
+					AI 幫寫 · {{ fieldLabel }}
+				</div>
+				<div class="ai-panel-body">
+					<label class="ai-field-label"><span class="required">*</span>請提供商品相關素材（描述/地點/網址）</label>
+					<!-- 這個元件常被放在外層頁面「真正欄位」的 a-form-item 裡（例如商品名稱），
 				用 no-style 包一層可以讓這個素材欄位有自己獨立的 Form.Item context，
 				不會被外層 form-item 的 name/rules 誤認成同一個欄位而互相觸發驗證。 -->
-				<a-form-item no-style>
-					<a-textarea
-						v-model:value="material"
-						class="material-input"
-						:auto-size="{ minRows: 3, maxRows: 6 }"
-						show-count
-						:maxlength="2000"
-						placeholder="一段描述、幾個關鍵字或網址，越詳細建議越準確" />
-				</a-form-item>
-				<div
-					v-if="prepFields.length"
-					class="prep-box">
-					<div class="prep-title">
-						準備欄位
-					</div>
+					<a-form-item no-style>
+						<a-textarea
+							v-model:value="material"
+							class="material-input"
+							:auto-size="{ minRows: 3, maxRows: 6 }"
+							show-count
+							:maxlength="2000"
+							placeholder="一段描述、幾個關鍵字或網址，越詳細建議越準確" />
+					</a-form-item>
 					<div
-						v-for="field in prepFields"
-						:key="field.fieldId || field.label"
-						class="prep-row">
-						<span class="prep-dot" />
-						<span class="prep-name">{{ field.label }}</span>
-						<a-tag
-							v-if="field.fieldId && field.fieldId === fieldId"
-							color="blue">
-							當前欄位
-						</a-tag>
-						<a-tag v-else>{{ field.step }}</a-tag>
-					</div>
-					<div class="prep-caption">
-						以上欄位會用同一份素材在背景生成，當填到對應頁面時，可直接查看建議與套用
-					</div>
-				</div>
-				<div class="gen-row">
-					<a-button @click="cancelPanel">
-						取消
-					</a-button>
-					<a-button
-						type="primary"
-						class="btn-ai"
-						:loading="generating"
-						:disabled="quotaRemaining === 0"
-						@click="generate">
-						產生內容
-					</a-button>
-				</div>
-				<div
-					v-if="sharedAiQuota"
-					class="quota-hint">
-					{{ quotaRemaining > 0 ? `今日額度 ${sharedAiQuota.used} / ${sharedAiQuota.limit}` : '今日生成次數已用完，請明天再試' }}
-				</div>
-			</div>
-		</div>
-
-		<div
-			v-if="state === 'ready'"
-			class="ai-ready-block">
-			<div class="arb-head">
-				<svg
-					viewBox="0 0 16 16"
-					fill="currentColor"
-					v-html="icons.sparkle" />
-				已經幫你準備好{{ fieldLabel }}建議了
-				<span class="arb-actions">
-					<span
-						class="arb-link"
-						@click="openPanel">
-						<svg
-							viewBox="0 0 14 14"
-							fill="currentColor"
-							v-html="icons.reload" />
-						重新生成
-					</span>
-					<close-outlined
-						class="arb-close"
-						@click="dismiss" />
-				</span>
-			</div>
-			<div
-				class="sugg-band"
-				:class="{ 'has-prev-fade': !atStart, 'has-next-fade': !atEnd }">
-				<div
-					ref="track"
-					class="sugg-track">
-					<div
-						v-for="(text, i) in suggestions"
-						:key="i"
-						class="sugg-item"
-						:class="{ wide, applied: i === appliedIndex }"
-						@click="apply(text)">
-						<div class="idx">
-							<check-outlined v-if="i === appliedIndex" />
-							<template v-else>
-								{{ String(i + 1).padStart(2, '0') }}
-							</template>
+						v-if="prepFields.length"
+						class="prep-box">
+						<div class="prep-title">
+							準備欄位
 						</div>
 						<div
-							class="txt"
-							v-html="text" />
+							v-for="field in prepFields"
+							:key="field.fieldId || field.label"
+							class="prep-row">
+							<span class="prep-dot" />
+							<span class="prep-name">{{ field.label }}</span>
+							<a-tag
+								v-if="field.fieldId && field.fieldId === fieldId"
+								color="blue">
+								當前欄位
+							</a-tag>
+							<a-tag v-else>{{ field.step }}</a-tag>
+						</div>
+						<div class="prep-caption">
+							以上欄位會用同一份素材在背景生成，當填到對應頁面時，可直接查看建議與套用
+						</div>
+					</div>
+					<div class="gen-row">
+						<a-button @click="cancelPanel">
+							取消
+						</a-button>
+						<a-button
+							type="primary"
+							class="btn-ai"
+							:loading="generating"
+							:disabled="quotaRemaining === 0"
+							@click="generate">
+							產生內容
+						</a-button>
+					</div>
+					<div
+						v-if="sharedAiQuota"
+						class="quota-hint">
+						{{ quotaRemaining > 0 ? `今日額度 ${sharedAiQuota.used} / ${sharedAiQuota.limit}` : '今日生成次數已用完，請明天再試' }}
 					</div>
 				</div>
-				<button
-					type="button"
-					class="sugg-chevron prev"
-					:disabled="atStart"
-					@click="scrollBy(-1)">‹</button>
-				<button
-					type="button"
-					class="sugg-chevron next"
-					:disabled="atEnd"
-					@click="scrollBy(1)">›</button>
 			</div>
-			<div class="arb-disclaimer">
-				<svg
-					viewBox="0 0 14 14"
-					fill="currentColor"
-					v-html="icons.warning" />
-				<span>文案內容由 AI 生成，僅供參考。請務必確認內容與實際提供之行程服務相符，如有落差請修改後再使用。</span>
+		</transition>
+
+		<transition
+			@before-enter="onExpandBeforeEnter"
+			@enter="onExpandEnter"
+			@leave="onExpandLeave">
+			<div
+				v-if="state === 'ready'"
+				class="ai-ready-block">
+				<div class="arb-head">
+					<svg
+						viewBox="0 0 16 16"
+						fill="currentColor"
+						v-html="icons.sparkle" />
+					已經幫你準備好{{ fieldLabel }}建議了
+					<span class="arb-actions">
+						<span
+							class="arb-link"
+							@click="openPanel">
+							<svg
+								viewBox="0 0 14 14"
+								fill="currentColor"
+								v-html="icons.reload" />
+							重新生成
+						</span>
+						<close-outlined
+							class="arb-close"
+							@click="dismiss" />
+					</span>
+				</div>
+				<div
+					class="sugg-band"
+					:class="{ 'has-prev-fade': !atStart, 'has-next-fade': !atEnd }">
+					<div
+						ref="track"
+						class="sugg-track">
+						<div
+							v-for="(text, i) in suggestions"
+							:key="i"
+							class="sugg-item"
+							:class="{ wide, applied: i === appliedIndex }"
+							@click="apply(text)">
+							<div class="idx">
+								<check-outlined v-if="i === appliedIndex" />
+								<template v-else>
+									{{ String(i + 1).padStart(2, '0') }}
+								</template>
+							</div>
+							<div
+								class="txt"
+								v-html="text" />
+						</div>
+					</div>
+					<button
+						type="button"
+						class="sugg-chevron prev"
+						:disabled="atStart"
+						@click="scrollBy(-1)">‹</button>
+					<button
+						type="button"
+						class="sugg-chevron next"
+						:disabled="atEnd"
+						@click="scrollBy(1)">›</button>
+				</div>
+				<div class="arb-disclaimer">
+					<svg
+						viewBox="0 0 14 14"
+						fill="currentColor"
+						v-html="icons.warning" />
+					<span>文案內容由 AI 生成，僅供參考。請務必確認內容與實際提供之行程服務相符，如有落差請修改後再使用。</span>
+				</div>
 			</div>
-		</div>
+		</transition>
 	</div>
 </template>
 
@@ -544,6 +559,49 @@ export default {
 			const el = this.$refs.track;
 			if (!el) return;
 			el.addEventListener('scroll', this.updateNavState);
+		},
+		// 素材面板/建議清單/回饋區塊展開收合時，用實際內容高度做平滑的展開動畫，
+		// 而不是直接跳轉；因為每個區塊內容高度都不固定（建議筆數、回饋階段不同），
+		// 沒辦法寫死一個 CSS 高度，所以量測 scrollHeight 再套用 transition。
+		onExpandBeforeEnter(el) {
+			el.style.height = '0';
+			el.style.opacity = '0';
+			el.style.overflow = 'hidden';
+		},
+		onExpandEnter(el, done) {
+			requestAnimationFrame(() => {
+				requestAnimationFrame(() => {
+					el.style.transition = 'height .22s ease, opacity .22s ease';
+					el.style.height = `${el.scrollHeight}px`;
+					el.style.opacity = '1';
+				});
+			});
+			const onEnd = event => {
+				if (event.target !== el || event.propertyName !== 'height') return;
+				el.style.height = 'auto';
+				el.style.overflow = '';
+				el.style.transition = '';
+				el.removeEventListener('transitionend', onEnd);
+				done();
+			};
+			el.addEventListener('transitionend', onEnd);
+		},
+		onExpandLeave(el, done) {
+			el.style.height = `${el.scrollHeight}px`;
+			el.style.overflow = 'hidden';
+			requestAnimationFrame(() => {
+				requestAnimationFrame(() => {
+					el.style.transition = 'height .18s ease, opacity .18s ease';
+					el.style.height = '0';
+					el.style.opacity = '0';
+				});
+			});
+			const onEnd = event => {
+				if (event.target !== el || event.propertyName !== 'height') return;
+				el.removeEventListener('transitionend', onEnd);
+				done();
+			};
+			el.addEventListener('transitionend', onEnd);
 		},
 	},
 	mounted() {
