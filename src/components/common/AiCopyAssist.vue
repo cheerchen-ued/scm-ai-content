@@ -564,11 +564,20 @@ export default {
 		// 而不是直接跳轉；因為每個區塊內容高度都不固定（建議筆數、回饋階段不同），
 		// 沒辦法寫死一個 CSS 高度，所以量測 scrollHeight 再套用 transition。
 		onExpandBeforeEnter(el) {
+			// 這個元件所在的頁面如果目前被 v-show 隱藏（例如共用素材連動時，使用者
+			// 正停留在別的節點，商品亮點/商品說明的 ready 狀態在背景被觸發），這個
+			// 元素量到的高度一律是 0，動畫沒有意義，直接跳過，不進入展開流程，避免
+			// inline style 卡在收合狀態，之後切回這個節點時畫面被裁切
+			if (el.offsetParent === null) return;
 			el.style.height = '0';
 			el.style.opacity = '0';
 			el.style.overflow = 'hidden';
 		},
 		onExpandEnter(el, done) {
+			if (el.offsetParent === null) {
+				done();
+				return;
+			}
 			requestAnimationFrame(() => {
 				requestAnimationFrame(() => {
 					el.style.transition = 'height .22s ease, opacity .22s ease';
@@ -587,6 +596,10 @@ export default {
 			el.addEventListener('transitionend', onEnd);
 		},
 		onExpandLeave(el, done) {
+			if (el.offsetParent === null) {
+				done();
+				return;
+			}
 			el.style.height = `${el.scrollHeight}px`;
 			el.style.overflow = 'hidden';
 			requestAnimationFrame(() => {
