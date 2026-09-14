@@ -15,6 +15,7 @@
 		</div>
 
 		<transition
+			:css="false"
 			@before-enter="onExpandBeforeEnter"
 			@enter="onExpandEnter"
 			@leave="onExpandLeave">
@@ -83,6 +84,7 @@
 		</transition>
 
 		<transition
+			:css="false"
 			@before-enter="onExpandBeforeEnter"
 			@enter="onExpandEnter"
 			@leave="onExpandLeave">
@@ -156,6 +158,7 @@
 		</transition>
 
 		<transition
+			:css="false"
 			@before-enter="onExpandBeforeEnter"
 			@enter="onExpandEnter"
 			@leave="onExpandLeave">
@@ -562,59 +565,44 @@ export default {
 		},
 		// 素材面板/建議清單/回饋區塊展開收合時，用實際內容高度做平滑的展開動畫，
 		// 而不是直接跳轉；因為每個區塊內容高度都不固定（建議筆數、回饋階段不同），
-		// 沒辦法寫死一個 CSS 高度，所以量測 scrollHeight 再套用 transition。
+		// 沒辦法寫死一個 CSS 高度，所以量測 scrollHeight 再套用動畫。用 Web Animations
+		// API（el.animate）而不是手動切 CSS transition + 監聽 transitionend：後者
+		// 若瀏覽器把「設 0 → 下一輪設目標值」這兩步優化成同一次繪製，會導致沒有真的
+		// 產生 transition、transitionend 永遠不會觸發，動畫卡住；WAAPI 沒有這個問題。
 		onExpandBeforeEnter(el) {
-			// 這個元件所在的頁面如果目前被 v-show 隱藏（例如共用素材連動時，使用者
-			// 正停留在別的節點，商品亮點/商品說明的 ready 狀態在背景被觸發），這個
-			// 元素量到的高度一律是 0，動畫沒有意義，直接跳過，不進入展開流程，避免
-			// inline style 卡在收合狀態，之後切回這個節點時畫面被裁切
-			if (el.offsetParent === null) return;
-			el.style.height = '0';
-			el.style.opacity = '0';
 			el.style.overflow = 'hidden';
 		},
 		onExpandEnter(el, done) {
+			// 這個元件所在的頁面如果目前被 v-show 隱藏（例如共用素材連動時，使用者
+			// 正停留在別的節點），量到的高度一律是 0，直接呈現最終狀態就好，不用動畫
 			if (el.offsetParent === null) {
+				el.style.overflow = '';
 				done();
 				return;
 			}
-			requestAnimationFrame(() => {
-				requestAnimationFrame(() => {
-					el.style.transition = 'height .22s ease, opacity .22s ease';
-					el.style.height = `${el.scrollHeight}px`;
-					el.style.opacity = '1';
-				});
-			});
-			const onEnd = event => {
-				if (event.target !== el || event.propertyName !== 'height') return;
+			const target = el.scrollHeight;
+			const anim = el.animate(
+				[{height: '0px', opacity: 0}, {height: `${target}px`, opacity: 1}],
+				{duration: 220, easing: 'ease'},
+			);
+			anim.onfinish = () => {
 				el.style.height = 'auto';
 				el.style.overflow = '';
-				el.style.transition = '';
-				el.removeEventListener('transitionend', onEnd);
 				done();
 			};
-			el.addEventListener('transitionend', onEnd);
 		},
 		onExpandLeave(el, done) {
 			if (el.offsetParent === null) {
 				done();
 				return;
 			}
-			el.style.height = `${el.scrollHeight}px`;
+			const start = el.scrollHeight;
 			el.style.overflow = 'hidden';
-			requestAnimationFrame(() => {
-				requestAnimationFrame(() => {
-					el.style.transition = 'height .18s ease, opacity .18s ease';
-					el.style.height = '0';
-					el.style.opacity = '0';
-				});
-			});
-			const onEnd = event => {
-				if (event.target !== el || event.propertyName !== 'height') return;
-				el.removeEventListener('transitionend', onEnd);
-				done();
-			};
-			el.addEventListener('transitionend', onEnd);
+			const anim = el.animate(
+				[{height: `${start}px`, opacity: 1}, {height: '0px', opacity: 0}],
+				{duration: 180, easing: 'ease'},
+			);
+			anim.onfinish = () => done();
 		},
 	},
 	mounted() {
