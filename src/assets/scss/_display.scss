@@ -1,0 +1,22 @@
+@use './variables' as variables;
+$display-properties: (block, inline, inline-block, none);
+
+@mixin display($value, $important: false) {
+	display: $value;
+	@if $important {
+		display: $value !important;
+	}
+}
+
+@each $property in $display-properties {
+	.d {
+		&-#{$property} {
+			@include display($property);
+		}
+		&-md-#{$property} {
+			@media (min-width: variables.$md-breakpoint) {
+				@include display($property, true);
+			}
+		}
+	}
+}

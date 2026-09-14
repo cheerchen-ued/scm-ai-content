@@ -1,0 +1,154 @@
+@use './variables' as variables;
+
+/* 有 show-count 的 textarea css hack */
+.ant-input-textarea-show-count {
+	.ant-input {
+		border-bottom: 0;
+		border-bottom-left-radius: 0;
+		border-bottom-right-radius: 0;
+	}
+
+	&:after {
+		padding: 2px 4px 2px 0;
+		display: block;
+		float: none;
+		background-color: var(--colors-neutral-bg-color-bg-container);
+		border: 1px solid #d2d6de;
+		border-radius: 0 0 var(--border-radius) var(--border-radius);
+		color: #666;
+		text-align: right;
+		transition: all 0.3s;
+	}
+
+	&:has(.ant-input-disabled) {
+		pointer-events: none;
+	}
+
+	&:has(.ant-input-disabled):after {
+		background-color: var(--colors-neutral-opacity-2) !important;
+		color: var(--colors-neutral-text-color-text-description);
+	}
+
+	&:has(.ant-input:focus),
+	&:has(.ant-input:hover) {
+		&:after {
+			border-left-color: var(--colors-brand-primary-color-primary-hover);
+			border-right-color: var(--colors-brand-primary-color-primary-hover);
+			border-bottom-color: var(--colors-brand-primary-color-primary-hover);
+			box-shadow: 0 0 0 2px rgba(38, 172, 255, 0.06);
+		}
+	}
+
+	&:has(.ant-input-status-error) {
+		&:after {
+			border-left-color: var(--colors-brand-error-color-error) !important;
+			border-right-color: var(--colors-brand-error-color-error) !important;
+			border-bottom-color: var(--colors-brand-error-color-error) !important;
+		}
+	}
+}
+
+.ant-modal-header {
+	.ant-modal-title {
+		margin-right: 18px;
+	}
+}
+
+.ant-modal-body {
+	ul, ol {
+		padding-left: var(--base-size-md);
+	}
+}
+
+// 複寫 white-space 讓 .ant-checkbox-group 中的錯誤訊息可換行
+.ant-form-item-explain-error {
+	white-space: initial;
+}
+
+.ant-input-number-group .ant-input-number-group-addon {
+	padding: 0 var(--base-size-xs);
+}
+
+// 複寫 tag mode 的 selector 的間距對齊 Figma 的樣式
+.ant-select-multiple .ant-select-selector {
+	padding: var(--base-size-xxs);
+
+	.ant-select-selection-overflow {
+		gap: var(--base-size-xxs) 0;
+	}
+
+	// 移除 after 讓單行高度不被撐高
+	&:after {
+		display: none;
+	}
+
+	.ant-select-selection-item {
+		margin-top: 0;
+		margin-bottom: 0;
+	}
+
+	.ant-tag {
+		margin-right: var(--base-size-xxs) !important;
+	}
+}
+
+// Table 元件的圓角和 filter 下拉選單的圓角
+.ant-table {
+	border-radius: var(--border-radius-lg) !important;
+	overflow: hidden;
+
+	.ant-table-body {
+		// -webkit-scrollbar 樣式比照 macOS 上 Chrome 的預設樣式
+		&::-webkit-scrollbar {
+			width: var(--base-size-xs);
+			height: var(--base-size-xs);
+			background-color: transparent;
+		}
+
+		&::-webkit-scrollbar-track {
+			background: transparent;
+		}
+
+		&::-webkit-scrollbar-thumb {
+			background: rgba(0, 0, 0, 0.3);
+			border-radius: var(--border-radius-sm);
+		}
+
+		&::-webkit-scrollbar-thumb:hover {
+			background: rgba(0, 0, 0, 0.3);
+		}
+	}
+}
+
+.ant-table-filter-dropdown {
+	overflow: hidden;
+}
+
+.ant-message {
+	z-index: variables.$zindex-message;
+}
+
+.ant-input-number-disabled .ant-input-number-input {
+	color: var(--colors-neutral-text-color-text-disabled);
+}
+
+.ant-select-disabled .ant-tag {
+	color: var(--colors-neutral-text-color-text-disabled);
+}
+
+.ant-select-disabled .ant-tag-error {
+	color: var(--colors-base-red-4);
+}
+
+.ant-input-number-disabled + .ant-input-number-group-addon {
+	color: var(--colors-neutral-text-color-text-disabled);
+}
+
+.ant-drawer {
+	z-index: variables.$zindex-modal-backdrop;
+	.ant-drawer-content {
+		.ant-drawer-header {
+			padding: var(--base-size-md) var(--base-size-lg);
+		}
+	}
+}

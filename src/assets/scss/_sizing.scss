@@ -1,0 +1,30 @@
+@use './variables' as variables;
+$sizes: (
+	25: 25%,
+	50: 50%,
+	75: 75%,
+	100: 100%,
+);
+
+@each $size, $length in $sizes {
+	.w {
+		&-#{$size} {
+			width: #{$length};
+		}
+		&-md-#{$size} {
+			@media (min-width: variables.$md-breakpoint) {
+				width: #{$length} !important;
+			}
+		}
+	}
+	.h {
+		&-#{$size} {
+			height: #{$length};
+		}
+		&-md-#{$size} {
+			@media (min-width: variables.$md-breakpoint) {
+				height: #{$length} !important;
+			}
+		}
+	}
+}

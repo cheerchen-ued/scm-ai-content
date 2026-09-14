@@ -1,0 +1,25 @@
+$md-breakpoint: 1000px;
+$md-breakpoint-min-width: $md-breakpoint + 1;
+
+// ===============================
+// z-index (based on ant design): antD `Modal` has a default z-index of 1000
+// ===============================
+
+// layout z-index levels (for main layout component)
+$zindex-layout-base: 10;
+$zindex-header: $zindex-layout-base + 1;
+$zindex-sidebar: $zindex-layout-base;
+$zindex-page-header: $zindex-layout-base - 1;  // below breadcrumb/sidebar
+$zindex-navbar: 1045;  // Navbar should appear above common-modals but below loading-modals
+
+// ui component z-index levels (for floating buttons, tool panels, etc.)
+$zindex-fixed-above-modal: 1090;
+$zindex-fixed-ui: 1000;
+$zindex-sticky-ui: 100;
+
+// modal z-index levels (custom modals above antD)
+$zindex-loading-modal: 1060;
+$zindex-message: 1050;
+$zindex-common-modal: 1040;
+$zindex-modal-backdrop: 1030;
+$zindex-draggable-modal: 1020;

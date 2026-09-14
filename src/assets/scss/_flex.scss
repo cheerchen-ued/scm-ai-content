@@ -1,0 +1,127 @@
+@use './variables' as variables;
+$flex-properties: (flex, inline-flex);
+$flex-directions: (row, column);
+$wrap-values: (wrap, wrap-reverse, nowrap);
+$align-items-values: (start, center, end, baseline, stretch);
+$justify-content-values: (start, center, end, between, around, evenly);
+$align-content-values: (start, center, end, stretch, around);
+$flex-grow-shrink-values: (grow, shrink);
+$flex-sizes: (0, 1);
+
+@mixin flex-fill($important: false) {
+	flex: 1 1 auto;
+	@if $important {
+		flex: 1 1 auto !important;
+	}
+}
+
+@each $property in $flex-properties {
+	.d {
+		&-#{$property} {
+			display: $property;
+		}
+		&-md-#{$property} {
+			@media (min-width: variables.$md-breakpoint) {
+				display: $property !important;
+			}
+		}
+	}
+}
+
+@each $direction in $flex-directions {
+	.flex {
+		&-#{$direction} {
+			flex-direction: $direction;
+		}
+		&-md-#{$direction} {
+			@media (min-width: variables.$md-breakpoint) {
+				flex-direction: $direction !important;
+			}
+		}
+	}
+}
+
+@each $value in $wrap-values {
+	.flex {
+		&-#{$value} {
+			flex-wrap: $value;
+		}
+		&-md-#{$value} {
+			@media (min-width: variables.$md-breakpoint) {
+				flex-wrap: $value !important;
+			}
+		}
+	}
+}
+
+@each $value in $align-items-values {
+	.align-items {
+		&-#{$value} {
+			align-items: $value;
+		}
+		&-md-#{$value} {
+			@media (min-width: variables.$md-breakpoint) {
+				align-items: $value !important;
+			}
+		}
+	}
+}
+
+@each $value in $justify-content-values {
+	.justify-content {
+		&-#{$value} {
+			justify-content: if(
+				$value == 'between' or $value == 'around' or $value == 'evenly',
+				space-#{$value},
+				#{$value}
+			);
+		}
+		&-md-#{$value} {
+			@media (min-width: variables.$md-breakpoint) {
+				justify-content: if(
+					$value == 'between' or $value == 'around' or $value == 'evenly',
+					space-#{$value},
+					#{$value}
+				) !important;
+			}
+		}
+	}
+}
+
+@each $value in $align-content-values {
+	.align-content {
+		&-#{$value} {
+			align-content: if($value == 'around', space-#{$value}, #{$value});
+		}
+		&-md-#{$value} {
+			@media (min-width: variables.$md-breakpoint) {
+				align-content: if($value == 'around', space-#{$value}, #{$value});
+			}
+		}
+	}
+}
+
+@each $property in $flex-grow-shrink-values {
+	@each $size in $flex-sizes {
+		.flex-#{$property}-#{$size} {
+			flex-#{$property}: #{$size};
+		}
+
+		.flex-md-#{$property}-#{$size} {
+			@media (min-width: variables.$md-breakpoint) {
+				flex-#{$property}: #{$size} !important;
+			}
+		}
+	}
+}
+
+.flex {
+	&-fill {
+		@include flex-fill;
+	}
+	@media (min-width: variables.$md-breakpoint) {
+		&-md-fill {
+			@include flex-fill(true);
+		}
+	}
+}
