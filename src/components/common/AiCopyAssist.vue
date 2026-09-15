@@ -830,7 +830,7 @@ export default {
 	align-items: center;
 	justify-content: flex-end;
 	gap: 10px;
-	margin-top: var(--space-margin);
+	margin-top: var(--space-margin-xs);
 
 	:deep(.btn-ai.ant-btn-primary) {
 		background: var(--colors-base-purple-5);
