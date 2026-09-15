@@ -786,8 +786,10 @@ export default {
 	}
 }
 
+// 依 Figma node 2033:16143：上下 padding 是同一個 --space-margin-sm（12px），
+// 不是上 16px、下 24px 這種不對稱寫法。
 .ai-panel-body {
-	padding: var(--space-margin) var(--space-margin) var(--space-margin-lg);
+	padding: var(--space-margin-sm) var(--space-margin);
 	background: #fff;
 }
 
