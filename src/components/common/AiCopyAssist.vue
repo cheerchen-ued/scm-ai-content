@@ -791,8 +791,10 @@ export default {
 	background: #fff;
 }
 
+// 依 Figma node 2033:16143：素材欄位／準備欄位／按鈕列這三個區塊之間的間距，
+// 是同一個 --space-margin-lg（24px），不是隨便抓的視覺順眼值。
 .material-input {
-	margin-bottom: var(--space-margin-sm);
+	margin-bottom: var(--space-margin-lg);
 }
 
 .ai-field-label {
@@ -800,7 +802,7 @@ export default {
 	font-size: 14px;
 	font-weight: 600;
 	color: var(--colors-neutral-text-color-text);
-	margin-bottom: var(--space-margin-xxs);
+	margin-bottom: var(--space-margin-xs);
 
 	.required {
 		color: var(--colors-brand-error-color-error, #e65f50);
@@ -809,14 +811,14 @@ export default {
 }
 
 .prep-box {
-	margin-top: var(--space-margin);
+	margin-top: 0;
 }
 
 .prep-title {
 	font-size: 14px;
 	font-weight: 600;
 	color: var(--colors-neutral-text-color-text);
-	margin-bottom: var(--space-margin-xxs);
+	margin-bottom: var(--space-margin-xs);
 }
 
 .prep-caption {
@@ -830,7 +832,7 @@ export default {
 	align-items: center;
 	justify-content: flex-end;
 	gap: 10px;
-	margin-top: var(--space-margin-xs);
+	margin-top: var(--space-margin-lg);
 
 	:deep(.btn-ai.ant-btn-primary) {
 		background: var(--colors-base-purple-5);
@@ -848,7 +850,7 @@ export default {
 // 的視覺關聯（放在按鈕列左邊會離按鈕太遠）。字級比免責聲明（12px tertiary）
 // 明顯一點，因為這個會直接影響使用者按不按得下「產生內容」，但還是遠比按鈕本身低調。
 .quota-hint {
-	margin-top: var(--space-margin-xxs);
+	margin-top: 2px;
 	text-align: right;
 	font-size: 14px;
 	color: var(--colors-neutral-text-color-text-secondary);
