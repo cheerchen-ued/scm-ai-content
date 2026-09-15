@@ -113,26 +113,13 @@
 							placeholder="一段描述、幾個關鍵字或網址，越詳細建議越準確" />
 					</a-form-item>
 					<div
-						v-if="prepFields.length"
+						v-if="otherFieldsSentence"
 						class="prep-box">
 						<div class="prep-title">
-							準備欄位
-						</div>
-						<div
-							v-for="field in prepFields"
-							:key="field.fieldId || field.label"
-							class="prep-row">
-							<span class="prep-dot" />
-							<span class="prep-name">{{ field.label }}</span>
-							<a-tag
-								v-if="field.fieldId && field.fieldId === fieldId"
-								color="blue">
-								當前欄位
-							</a-tag>
-							<a-tag v-else>{{ field.step }}</a-tag>
+							以下欄位會一同生成
 						</div>
 						<div class="prep-caption">
-							以上欄位會用同一份素材在背景生成，當填到對應頁面時，可直接查看建議與套用
+							{{ otherFieldsSentence }}
 						</div>
 					</div>
 					<div class="gen-row">
@@ -376,6 +363,19 @@ export default {
 		},
 		quotaRemaining() {
 			return this.sharedAiQuota ? Math.max(this.sharedAiQuota.limit - this.sharedAiQuota.used, 0) : null;
+		},
+		// 「以下欄位會一同生成」的說明文字：只列出「其他」共用素材的欄位（不含自己，
+		// 因為上面的面板標題已經寫了目前是哪個欄位），依 Figma node 2033:16143 格式
+		// 寫成一句話，例如「商品亮點（STEP 1-2）、商品說明（STEP 5-1）欄位會一起用
+		// 這份素材生成，切換到對應頁面即可查看與套用建議。」
+		otherFieldsSentence() {
+			const others = this.prepFields.filter(field => !(field.fieldId && field.fieldId === this.fieldId));
+			if (!others.length) return '';
+			const parts = others.map(field => {
+				const shortStep = (field.step || '').split(' · ')[0];
+				return shortStep ? `${field.label}（${shortStep}）` : field.label;
+			});
+			return `${parts.join('、')}欄位會一起用這份素材生成，切換到對應頁面即可查看與套用建議。`;
 		},
 		// 即時比對「欄位現在的內容」跟哪一個建議一字不差：不是記錄「歷史上點過哪個」，
 		// 而是每次都重新比對，這樣使用者套用後若又編輯過、或整個刪掉，勾勾會自動消失，
@@ -819,31 +819,10 @@ export default {
 	margin-bottom: var(--space-margin-xxs);
 }
 
-.prep-row {
-	display: flex;
-	align-items: center;
-	gap: var(--space-margin-xs);
-	padding: 6px 0;
-	font-size: 14px;
-	color: var(--colors-neutral-text-color-text);
-}
-
-.prep-dot {
-	width: 6px;
-	height: 6px;
-	border-radius: 50%;
-	background: var(--colors-neutral-text-color-text-quaternary);
-	flex-shrink: 0;
-}
-
-.prep-name {
-	flex-shrink: 0;
-}
-
 .prep-caption {
-	padding-top: 2px;
 	font-size: 14px;
-	color: var(--colors-neutral-text-color-text-tertiary);
+	line-height: 1.55;
+	color: var(--colors-neutral-text-color-text);
 }
 
 .gen-row {
