@@ -99,7 +99,7 @@
 					AI 幫寫 · {{ fieldLabel }}
 				</div>
 				<div class="ai-panel-body">
-					<label class="ai-field-label"><span class="required">*</span>請提供商品相關素材（描述/地點/網址）</label>
+					<label class="ai-field-label"><span class="required">*</span>行程重點、關鍵字或特色服務</label>
 					<!-- 這個元件常被放在外層頁面「真正欄位」的 a-form-item 裡（例如商品名稱），
 				用 no-style 包一層可以讓這個素材欄位有自己獨立的 Form.Item context，
 				不會被外層 form-item 的 name/rules 誤認成同一個欄位而互相觸發驗證。 -->
@@ -110,7 +110,7 @@
 							:auto-size="{ minRows: 3, maxRows: 6 }"
 							show-count
 							:maxlength="2000"
-							placeholder="一段描述、幾個關鍵字或網址，越詳細建議越準確" />
+							placeholder="一段描述、幾個關鍵字或網址" />
 					</a-form-item>
 					<div
 						v-if="otherFieldsSentence"
