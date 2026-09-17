@@ -11,7 +11,7 @@
 				viewBox="0 0 16 16"
 				fill="currentColor"
 				v-html="icons.sparkle" />
-			AI 幫寫
+			AI 潤稿
 		</div>
 
 		<transition
@@ -91,18 +91,17 @@
 			<div
 				v-if="state === 'panelOpen'"
 				class="ai-panel">
-				<div class="ai-panel-head">
-					<svg
-						viewBox="0 0 16 16"
-						fill="currentColor"
-						v-html="icons.sparkle" />
-					AI 幫寫 · {{ fieldLabel }}
-				</div>
-				<div class="ai-panel-body">
-					<label class="ai-field-label"><span class="required">*</span>行程重點、關鍵字或特色服務</label>
+				<div class="ai-panel-top">
+					<div class="ai-panel-head">
+						<svg
+							viewBox="0 0 16 16"
+							fill="currentColor"
+							v-html="icons.sparkle" />
+						您的行程重點、關鍵字或特色服務為何呢？
+					</div>
 					<!-- 這個元件常被放在外層頁面「真正欄位」的 a-form-item 裡（例如商品名稱），
-				用 no-style 包一層可以讓這個素材欄位有自己獨立的 Form.Item context，
-				不會被外層 form-item 的 name/rules 誤認成同一個欄位而互相觸發驗證。 -->
+					用 no-style 包一層可以讓這個素材欄位有自己獨立的 Form.Item context，
+					不會被外層 form-item 的 name/rules 誤認成同一個欄位而互相觸發驗證。 -->
 					<a-form-item no-style>
 						<a-textarea
 							v-model:value="material"
@@ -110,36 +109,31 @@
 							:auto-size="{ minRows: 3, maxRows: 6 }"
 							show-count
 							:maxlength="2000"
-							placeholder="一段描述、幾個關鍵字或網址" />
+							placeholder="輸入行程重點、關鍵字或特色服務" />
 					</a-form-item>
 					<div
-						v-if="otherFieldsSentence"
-						class="prep-box">
-						<div class="prep-title">
-							以下欄位會一同生成
-						</div>
-						<div class="prep-caption">
-							{{ otherFieldsSentence }}
-						</div>
+						v-if="materialCaption"
+						class="material-caption">
+						{{ materialCaption }}
 					</div>
-					<div class="gen-row">
-						<a-button @click="cancelPanel">
-							取消
-						</a-button>
-						<a-button
-							type="primary"
-							class="btn-ai"
-							:loading="generating"
-							:disabled="quotaRemaining === 0"
-							@click="generate">
-							產生內容
-						</a-button>
-					</div>
+				</div>
+				<div class="gen-row">
 					<div
 						v-if="sharedAiQuota"
 						class="quota-hint">
 						{{ quotaRemaining > 0 ? `今日額度 ${sharedAiQuota.used} / ${sharedAiQuota.limit}` : '今日生成次數已用完，請明天再試' }}
 					</div>
+					<a-button @click="cancelPanel">
+						取消
+					</a-button>
+					<a-button
+						type="primary"
+						class="btn-ai"
+						:loading="generating"
+						:disabled="quotaRemaining === 0"
+						@click="generate">
+						產生內容
+					</a-button>
 				</div>
 			</div>
 		</transition>
@@ -157,15 +151,12 @@
 						viewBox="0 0 16 16"
 						fill="currentColor"
 						v-html="icons.sparkle" />
-					已經幫你準備好{{ fieldLabel }}建議了
+					已經幫你準備好{{ fieldLabel }}建議
 					<span class="arb-actions">
 						<span
 							class="arb-link"
 							@click="openPanel">
-							<svg
-								viewBox="0 0 14 14"
-								fill="currentColor"
-								v-html="icons.reload" />
+							<reload-outlined />
 							重新生成
 						</span>
 						<close-outlined
@@ -173,39 +164,28 @@
 							@click="dismiss" />
 					</span>
 				</div>
-				<div
-					class="sugg-band"
-					:class="{ 'has-prev-fade': !atStart, 'has-next-fade': !atEnd }">
-					<div
-						ref="track"
-						class="sugg-track">
-						<div
-							v-for="(text, i) in suggestions"
-							:key="i"
-							class="sugg-item"
-							:class="{ wide, applied: i === appliedIndex }"
-							@click="apply(text)">
-							<div class="idx">
-								<check-outlined v-if="i === appliedIndex" />
-								<template v-else>
-									{{ String(i + 1).padStart(2, '0') }}
-								</template>
-							</div>
-							<div
-								class="txt"
+				<div class="sugg-list">
+					<button
+						v-for="(text, i) in suggestions"
+						:key="i"
+						type="button"
+						class="sugg-card"
+						:class="{ applied: i === appliedIndex }"
+						@click="apply(text)">
+						<span class="sugg-idx">
+							<check-outlined v-if="i === appliedIndex" />
+							<template v-else>
+								{{ String(i + 1).padStart(2, '0') }}
+							</template>
+						</span>
+						<span
+							class="sugg-text-wrap"
+							:class="{ 'has-more': suggOverflowFlags[i] }">
+							<span
+								class="sugg-text"
 								v-html="text" />
-						</div>
-					</div>
-					<button
-						type="button"
-						class="sugg-chevron prev"
-						:disabled="atStart"
-						@click="scrollBy(-1)">‹</button>
-					<button
-						type="button"
-						class="sugg-chevron next"
-						:disabled="atEnd"
-						@click="scrollBy(1)">›</button>
+						</span>
+					</button>
 				</div>
 				<div class="arb-disclaimer">
 					<svg
@@ -221,7 +201,7 @@
 
 <script>
 import {
-	CheckOutlined, CloseOutlined, SmileTwoTone, FrownTwoTone,
+	CheckOutlined, CloseOutlined, ReloadOutlined, SmileTwoTone, FrownTwoTone,
 } from '@ant-design/icons-vue';
 
 // 不滿意時可複選的原因標籤，固定順序（依設計稿）
@@ -245,19 +225,6 @@ const ICON_SPARKLE = '' +
 	' 6.27705L5.63246 8.21082H4.36754L3.72295 6.27705L1.78918 5.63246V4.36754L3.72295 3.72295ZM5 4.10818L4.88246 4.46082L4.46082 4.88246L4.10819' +
 	' 5L4.46082 5.11754L4.88246 5.53918L5 5.89181L5.11754 5.53918L5.53918 5.11754L5.89182 5L5.53918 4.88246L5.11754 4.46082L5 4.10818Z" />';
 
-const ICON_RELOAD = '' +
-	'<path d="M12.4289 2.86152L11.6578 3.46445C10.6064 2.12051 8.97128 1.25781 7.13515 1.25781C3.96464 1.25781 1.39843 3.82129 1.39433 6.99316C1.39023' +
-	' 10.1678 3.96191 12.7422 7.13515 12.7422C9.61386 12.7422 11.7262 11.1699 12.5301 8.96738C12.5506 8.90996 12.5205 8.8457 12.4631 8.82656L11.6879' +
-	' 8.55996C11.6609 8.5507 11.6313 8.55238 11.6055 8.56464C11.5797 8.5769 11.5597 8.59878 11.5498 8.62559C11.5252 8.69395 11.4978 8.7623 11.4691' +
-	' 8.8293C11.2326 9.38984 10.8935 9.89297 10.4615 10.325C10.033 10.7544 9.52558 11.0969 8.96718 11.334C8.38886 11.5787 7.77226 11.7031 7.13788' +
-	' 11.7031C6.50214 11.7031 5.8869 11.5787 5.30858 11.334C4.74964 11.0979 4.24207 10.7552 3.81425 10.325C3.38454 9.89651 3.04231 9.3885 2.80663' +
-	' 8.8293C2.56191 8.24961 2.43749 7.63437 2.43749 6.99863C2.43749 6.36289 2.56191 5.74766 2.80663 5.16797C3.04315 4.60742 3.38222 4.1043 3.81425' +
-	' 3.67227C4.24628 3.24023 4.7494 2.90117 5.30858 2.66328C5.8869 2.41855 6.50351 2.29414 7.13788 2.29414C7.77362 2.29414 8.38886 2.41855 8.96718' +
-	' 2.66328C9.52612 2.89932 10.0337 3.24204 10.4615 3.67227C10.5969 3.80762 10.724 3.95117 10.8416 4.10156L10.0185 4.74414C10.0023 4.75674 9.98986' +
-	' 4.77368 9.98278 4.79301C9.97569 4.81234 9.9742 4.83328 9.97849 4.85341C9.98277 4.87355 9.99265 4.89207 10.007 4.90684C10.0213 4.92161 10.0396' +
-	' 4.93204 10.0596 4.93691L12.4603 5.5248C12.5287 5.54121 12.5957 5.48926 12.5957 5.41953L12.6066 2.94629C12.6053 2.85605 12.5 2.80547 12.4289' +
-	' 2.86152V2.86152Z" />';
-
 const ICON_WARNING = '' +
 	'<path d="M7 0.875C3.61758 0.875 0.875 3.61758 0.875 7C0.875 10.3824 3.61758 13.125 7 13.125C10.3824 13.125 13.125 10.3824 13.125 7C13.125' +
 	' 3.61758 10.3824 0.875 7 0.875ZM6.5625 4.04688C6.5625 3.98672 6.61172 3.9375 6.67188 3.9375H7.32812C7.38828 3.9375 7.4375 3.98672 7.4375' +
@@ -271,6 +238,7 @@ export default {
 	components: {
 		CheckOutlined,
 		CloseOutlined,
+		ReloadOutlined,
 		SmileTwoTone,
 		FrownTwoTone,
 	},
@@ -283,11 +251,7 @@ export default {
 			type: Array,
 			required: true,
 		},
-		wide: {
-			type: Boolean,
-			default: false,
-		},
-		// 素材面板裡「準備欄位」列表：包含全部共用同一份素材的欄位（含這個欄位自己），順序
+		// 選填：素材面板裡「準備欄位」列表：包含全部共用同一份素材的欄位（含這個欄位自己），順序
 		// 固定不隨目前是哪個欄位而改變，每項為 {fieldId, label, step}；命中目前 fieldId 的那項
 		// 會把 step 標籤換成「當前欄位」，其餘維持原本的 step 標籤，藉此讓清單順序保持穩定。
 		prepFields: {
@@ -301,7 +265,7 @@ export default {
 			default: null,
 		},
 		// 選填：這個欄位目前既有的內容（使用者自己填的、或先前已套用的文案）。
-		// 第一次點開 AI 幫寫、素材欄位還是空的時候，會直接帶入這裡的內容當作素材起點；
+		// 第一次點開 AI 潤稿、素材欄位還是空的時候，會直接帶入這裡的內容當作素材起點；
 		// 也用來即時比對「現在是不是還套用著某個建議」（見 appliedIndex）。
 		existingContent: {
 			type: String,
@@ -315,7 +279,7 @@ export default {
 			default: false,
 		},
 	},
-	emits: ['apply'],
+	emits: ['apply', 'update:fieldDisabled', 'update:panelActive'],
 	inject: {
 		sharedAiStatus: {default: null},
 		sharedAiActions: {default: null},
@@ -334,8 +298,9 @@ export default {
 			// 是否已經在本機生成過一次建議（給沒有 fieldId/共用狀態的正式頁面用的本機記憶）
 			hasGeneratedOnce: false,
 			generating: false,
-			atStart: true,
-			atEnd: false,
+			// 每則建議卡的文字是否超出 140px 上限（實際量測 scrollHeight），超出的才顯示
+			// 卡片下緣的漸層提示，讓使用者知道還能往下捲，不是每張卡都套用
+			suggOverflowFlags: [],
 			// 套用建議後的輕量回饋機制：ask（詢問滿意度）→ reasons（不滿意的原因清單）/ thanks（感謝訊息）
 			feedback: {
 				visible: false,
@@ -347,7 +312,6 @@ export default {
 			feedbackReasonOptions: FEEDBACK_REASON_OPTIONS,
 			icons: {
 				sparkle: ICON_SPARKLE,
-				reload: ICON_RELOAD,
 				warning: ICON_WARNING,
 			},
 		};
@@ -365,9 +329,9 @@ export default {
 			return this.sharedAiQuota ? Math.max(this.sharedAiQuota.limit - this.sharedAiQuota.used, 0) : null;
 		},
 		// 「以下欄位會一同生成」的說明文字：只列出「其他」共用素材的欄位（不含自己，
-		// 因為上面的面板標題已經寫了目前是哪個欄位），依 Figma node 2033:16143 格式
-		// 寫成一句話，例如「商品亮點（STEP 1-2）、商品說明（STEP 5-1）欄位會一起用
-		// 這份素材生成，切換到對應頁面即可查看與套用建議。」
+		// 因為上面的面板標題已經寫了目前是哪個欄位），依 Figma node 2108:26356 格式
+		// 寫成一句話，例如「商品亮點（STEP 1-2）、商品說明（STEP 5-1）欄位會一起
+		// 生成，到對應頁面即可查看與套用建議。」
 		otherFieldsSentence() {
 			const others = this.prepFields.filter(field => !(field.fieldId && field.fieldId === this.fieldId));
 			if (!others.length) return '';
@@ -375,7 +339,15 @@ export default {
 				const shortStep = (field.step || '').split(' · ')[0];
 				return shortStep ? `${field.label}（${shortStep}）` : field.label;
 			});
-			return `${parts.join('、')}欄位會一起用這份素材生成，切換到對應頁面即可查看與套用建議。`;
+			return `${parts.join('、')}欄位會一起生成，到對應頁面即可查看與套用建議。`;
+		},
+		// 素材輸入畫面下方的 caption，就是 otherFieldsSentence 本身——依 Figma node
+		// 2108:26356 實際核對過的「填寫素材」畫面，caption 固定顯示這句「其他欄位會
+		// 一起生成」的提示，不會因為素材有沒有內容而換成別的文字，不要自己延伸出一套
+		// 「有內容就切換提示」的邏輯（那是另一個「輸入框內建 AI」實驗版面才有確認過
+		// 的行為，這裡沒有對應的設計稿依據）。
+		materialCaption() {
+			return this.otherFieldsSentence;
 		},
 		// 即時比對「欄位現在的內容」跟哪一個建議一字不差：不是記錄「歷史上點過哪個」，
 		// 而是每次都重新比對，這樣使用者套用後若又編輯過、或整個刪掉，勾勾會自動消失，
@@ -404,10 +376,27 @@ export default {
 			if (!this.sharedActiveNode || !this.fieldId) return true;
 			return this.sharedActiveNode.current === this.fieldId;
 		},
+		// 素材輸入畫面開著的時候（generate() 進行中，結果回來前 state 都還是 panelOpen，
+		// 所以不用另外檢查 generating），真實欄位要 disable，避免使用者同時在兩個框打字、
+		// 分心；一旦看到建議清單（ready）就要解鎖——這時素材框已經收起來，畫面上只剩唯讀
+		// 的建議卡片，不存在「兩個輸入框搶焦點」的問題，而且使用者可能不想要任何建議、
+		// 想自己直接打，不能被卡住。
+		isComposingMaterial() {
+			return this.state === 'panelOpen';
+		},
+		// 真實欄位「原本的說明文字」（例如商品名稱的『建議依照...格式撰寫』）該不該顯示：
+		// 依 Figma node 2108:26356 實際核對過 idle（2107:303050）跟套用後（2107:303170）
+		// 這兩個狀態都有這段說明文字，但素材輸入畫面（2107:303088）跟已產生建議
+		// （2107:303129）這兩個狀態都沒有——也就是只要 AI 面板/建議清單佔用了這塊版位，
+		// 欄位原本的說明文字就要讓出來，等回到 idle（不管是從沒生成過、還是套用完畢）才
+		// 恢復顯示。
+		isPanelActive() {
+			return this.state !== 'idle';
+		},
 	},
 	watch: {
 		// 同一份素材連動生成好之後，其他共用欄位只要還是 idle（使用者還沒手動關掉過），
-		// 就直接自動顯示建議，不用使用者自己點開「AI 幫寫」才看得到
+		// 就直接自動顯示建議，不用使用者自己點開「AI 潤稿」才看得到
 		externalStatus(value) {
 			if (value === 'ready' && this.state === 'idle') {
 				this.state = 'ready';
@@ -416,12 +405,9 @@ export default {
 		state(value) {
 			if (value === 'ready') {
 				this.hasGeneratedOnce = true;
-				this.$nextTick(() => {
-					this.updateNavState();
-					this.bindTrackScroll();
-				});
+				this.$nextTick(() => this.checkSuggOverflow());
 			}
-			// 重新打開 AI 幫寫（不管是進素材畫面還是直接看建議）就收起回饋區塊，避免跟新一輪操作擠在一起
+			// 重新打開 AI 潤稿（不管是進素材畫面還是直接看建議）就收起回饋區塊，避免跟新一輪操作擠在一起
 			if (value !== 'idle' && this.feedback.visible) {
 				this.hideFeedback();
 			}
@@ -438,6 +424,30 @@ export default {
 			if (!value && this.feedback.visible) {
 				this.hideFeedback();
 			}
+			// 這個欄位在 v-show 隱藏（使用者停留在別的節點）時，如果透過聯動生成跳進
+			// ready，量到的 scrollHeight/clientHeight 都是 0（隱藏元素沒有實際版面），
+			// 會誤判成「沒有超出」。使用者實際切換回這個節點、畫面真的可見時，要重新
+			// 量一次，不能只依賴 state 變成 ready 那一次的量測結果。
+			if (value && this.state === 'ready') {
+				this.$nextTick(() => this.checkSuggOverflow());
+			}
+		},
+		// 通知外層頁面（真實欄位是它渲染的，這個元件本身管不到）現在該不該 disable 真實欄位；
+		// immediate:true 是為了掛載當下也同步一次初始值（一律是 false，跟外層預設值一致，但
+		// 明確同步一次比較保險，不用依賴外層自己猜對初始值）。
+		isComposingMaterial: {
+			immediate: true,
+			handler(value) {
+				this.$emit('update:fieldDisabled', value);
+			},
+		},
+		// 通知外層頁面現在該不該隱藏欄位原本的說明文字（見 isPanelActive 的說明）；
+		// 一樣用 immediate:true 掛載當下就同步一次初始值。
+		isPanelActive: {
+			immediate: true,
+			handler(value) {
+				this.$emit('update:panelActive', value);
+			},
 		},
 	},
 	created() {
@@ -447,18 +457,26 @@ export default {
 			this.state = 'ready';
 		}
 	},
+	mounted() {
+		if (this.state === 'ready') {
+			this.$nextTick(() => this.checkSuggOverflow());
+		}
+	},
 	methods: {
-		// 「AI 幫寫」小按鈕入口：已經有準備好的建議（不管有沒有套用過）就直接看建議，
+		checkSuggOverflow() {
+			const els = Array.from(this.$el.querySelectorAll('.sugg-text'));
+			this.suggOverflowFlags = els.map(el => el.scrollHeight > el.clientHeight);
+		},
+		// 「AI 潤稿」小按鈕入口：已經有準備好的建議（不管有沒有套用過）就直接看建議，
 		// 不用重新輸入素材；從沒生成過才進到素材輸入畫面
 		handleTriggerClick() {
-			// inline 模式下按鈕會常駐顯示，面板/建議清單展開時再點一次要能收回去
-			// （真正的開關切換），不是點了沒反應
-			if (this.state === 'panelOpen') {
-				this.cancelPanel();
-				return;
-			}
-			if (this.state === 'ready') {
-				this.dismiss();
+			// 這顆鈕是單純的展開／收合開關：只要目前不是 idle，點一下永遠是直接收合，
+			// 不做「退回上一步」的中間判斷（那是素材畫面裡「取消」按鈕的語意，見
+			// cancelPanel）。不這樣拆開的話，同樣點這顆鈕，有時候會收合、有時候卻是
+			// 跳去顯示建議，行為不可預期。建議本身不會因為收合而消失，之後再點一次
+			// 這顆鈕、hasSuggestionsReady 還是會直接帶回同一批建議。
+			if (this.state !== 'idle') {
+				this.state = 'idle';
 				return;
 			}
 			if (this.hasSuggestionsReady) {
@@ -467,15 +485,20 @@ export default {
 			}
 			this.openPanel();
 		},
-		// 一律進素材輸入畫面：「重新生成」連結會用到，代表使用者明確要產生全新一批
+		// 一律進素材輸入畫面：「重新生成」連結會用到，代表使用者明確要產生全新一批。
+		// 只要欄位現在有內容，每次打開都一律重新帶入欄位「當下」的內容當素材起點
+		// （不是只有第一次、素材是空的時候才帶）——欄位內容才是最新的使用者意圖，
+		// 不管是套用後又手動改過、還是套用了不同的建議，素材都要跟著反映最新狀態。
+		// 欄位目前是空的時候，才維持素材原本的樣子（不會平白把使用者還沒送出的
+		// 素材草稿清空）。
 		openPanel() {
 			this.state = 'panelOpen';
-			if (!this.material && this.existingContent) {
+			if (this.existingContent) {
 				this.material = this.existingContent.replace(/<[^>]+>/g, '');
 			}
 		},
-		// 建議區塊右上角的關閉按鈕：單純把畫面收回「AI 幫寫」入口，不影響已生成/已套用的內容，
-		// 之後點「AI 幫寫」還是會直接看到同一批建議
+		// 建議區塊右上角的關閉按鈕：單純把畫面收回「AI 潤稿」入口，不影響已生成/已套用的內容，
+		// 之後點「AI 潤稿」還是會直接看到同一批建議
 		dismiss() {
 			this.state = 'idle';
 		},
@@ -500,7 +523,7 @@ export default {
 		apply(text) {
 			const plainText = text.replace(/<[^>]+>/g, '');
 			this.$emit('apply', plainText);
-			// 套用後退回「AI 幫寫」入口；下次點開會直接看到這批建議，套用過的那個會顯示
+			// 套用後退回「AI 潤稿」入口；下次點開會直接看到這批建議，套用過的那個會顯示
 			// 勾勾（用即時比對判斷，見 appliedIndex），不需要重新生成
 			this.state = 'idle';
 			if (this.fieldId && this.sharedAiActions) {
@@ -544,25 +567,6 @@ export default {
 		submitFeedback() {
 			this.feedback.phase = 'thanks';
 		},
-		scrollBy(dir) {
-			const el = this.$refs.track;
-			if (!el) return;
-			el.scrollBy({left: dir * el.clientWidth * 0.42, behavior: 'smooth'});
-		},
-		updateNavState() {
-			const el = this.$refs.track;
-			if (!el) return;
-			// 尾端保留了 34px 給右側漸層/按鈕使用（見 .sugg-track 的 padding-right），
-			// 加上 scroll-snap 只會停在卡片邊界，實際能捲到的最大距離不會等於 scrollWidth - clientWidth，
-			// 容許誤差需要涵蓋這段保留空間，否則永遠判斷不到「已捲到底」。
-			this.atStart = el.scrollLeft <= 4;
-			this.atEnd = el.scrollLeft >= el.scrollWidth - el.clientWidth - 40;
-		},
-		bindTrackScroll() {
-			const el = this.$refs.track;
-			if (!el) return;
-			el.addEventListener('scroll', this.updateNavState);
-		},
 		// 素材面板/建議清單/回饋區塊展開收合時，用實際內容高度做平滑的展開動畫，
 		// 而不是直接跳轉；因為每個區塊內容高度都不固定（建議筆數、回饋階段不同），
 		// 沒辦法寫死一個 CSS 高度，所以量測 scrollHeight 再套用動畫。用 Web Animations
@@ -605,12 +609,6 @@ export default {
 			anim.onfinish = () => done();
 		},
 	},
-	mounted() {
-		this.$nextTick(() => {
-			this.updateNavState();
-			this.bindTrackScroll();
-		});
-	},
 };
 </script>
 
@@ -625,28 +623,34 @@ export default {
 	}
 }
 
+// 依 Figma node 2108:26356 的「Ai」元件（Button/Basic 疊淺紫底）：邊框是 purple-3
+// （不是 purple-2）、圓角是標準的 --border-radius（6px，不是 --border-radius-sm）、
+// 字級 14px 一般字重（不是 12.5px semibold），還有 antd 按鈕預設的三層淺陰影。
 .ai-trigger {
 	display: inline-flex;
 	align-items: center;
-	gap: 6px;
+	justify-content: center;
+	gap: 8px;
 	width: fit-content;
+	height: 32px;
+	box-sizing: border-box;
 	background: var(--colors-base-purple-1);
 	color: var(--colors-base-purple-6);
-	border: 1px solid var(--colors-base-purple-2);
-	border-radius: var(--border-radius-sm);
-	padding: 4px 12px 4px 8px;
-	font-size: 12.5px;
-	font-weight: 600;
+	border: 1px solid var(--colors-base-purple-3);
+	border-radius: var(--border-radius);
+	padding: 0 15px;
+	font-size: 14px;
+	font-weight: 400;
 	cursor: pointer;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, .03), 0 1px 3px rgba(0, 0, 0, .02), 0 2px 2px rgba(0, 0, 0, .02);
 
 	svg {
-		width: 14px;
-		height: 14px;
+		width: 16px;
+		height: 16px;
+		flex-shrink: 0;
 	}
 
 	&.inline {
-		height: 32px;
-		box-sizing: border-box;
 		flex-shrink: 0;
 	}
 }
@@ -762,19 +766,30 @@ export default {
 	color: var(--colors-brand-success-color-success);
 }
 
+// 依 Figma node 2108:26356：整個素材面板是同一色調的淺紫卡片，不再分成「紫色
+// 標題列 + 白色內容區」兩段——標題（問句）、素材輸入框、caption 全部都在同一塊
+// 淺紫背景裡，跟按鈕列之間留 --space-margin-lg（20px 的 gap，這裡沿用既有的
+// margin-lg token）的間距。
 .ai-panel {
-	border: 1px solid var(--colors-base-purple-2);
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-margin-lg);
 	background: var(--colors-base-purple-1);
+	border: 1px solid var(--colors-base-purple-2);
 	border-radius: var(--border-radius-lg);
-	overflow: hidden;
+	padding: var(--space-margin-sm) var(--space-margin) var(--space-margin);
+}
+
+.ai-panel-top {
+	display: flex;
+	flex-direction: column;
 }
 
 .ai-panel-head {
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	padding: var(--space-margin-sm) var(--space-margin);
-	border-bottom: 1px solid var(--colors-base-purple-2);
+	margin-bottom: var(--space-margin-xs);
 	font-weight: 600;
 	font-size: 14px;
 	color: var(--colors-base-purple-6);
@@ -786,59 +801,23 @@ export default {
 	}
 }
 
-// 依 Figma node 2033:16143：上下 padding 是同一個 --space-margin-sm（12px），
-// 不是上 16px、下 24px 這種不對稱寫法。
-.ai-panel-body {
-	padding: var(--space-margin-sm) var(--space-margin);
-	background: #fff;
-}
-
-// 依 Figma node 2033:16143：素材欄位／準備欄位／按鈕列這三個區塊之間的間距，
-// 是同一個 --space-margin-lg（24px），不是隨便抓的視覺順眼值。
-.material-input {
-	margin-bottom: var(--space-margin-lg);
-}
-
-.ai-field-label {
-	display: block;
-	font-size: 14px;
-	font-weight: 600;
-	color: var(--colors-neutral-text-color-text);
-	margin-bottom: var(--space-margin-xs);
-
-	.required {
-		color: var(--colors-brand-error-color-error, #e65f50);
-		margin-right: 2px;
-	}
-}
-
-.prep-box {
-	margin-top: 0;
-}
-
-.prep-title {
-	font-size: 14px;
-	font-weight: 600;
-	color: var(--colors-neutral-text-color-text);
-	margin-bottom: var(--space-margin-xs);
-}
-
-.prep-caption {
+.material-caption {
+	margin-top: var(--space-margin-xxs);
 	font-size: 14px;
 	line-height: 1.55;
-	color: var(--colors-neutral-text-color-text);
+	color: var(--colors-neutral-text-color-text-tertiary);
 }
 
 .gen-row {
 	display: flex;
 	align-items: center;
 	justify-content: flex-end;
-	gap: 10px;
-	margin-top: var(--space-margin-lg);
+	gap: var(--space-margin);
 
 	:deep(.btn-ai.ant-btn-primary) {
 		background: var(--colors-base-purple-5);
 		border-color: var(--colors-base-purple-5);
+		box-shadow: 0 2px 0 var(--colors-base-purple-1);
 
 		&:hover,
 		&:focus {
@@ -848,14 +827,13 @@ export default {
 	}
 }
 
-// 剩餘生成次數的提示：直接放在按鈕下面、跟按鈕一樣靠右，維持跟「產生內容」
-// 的視覺關聯（放在按鈕列左邊會離按鈕太遠）。字級比免責聲明（12px tertiary）
-// 明顯一點，因為這個會直接影響使用者按不按得下「產生內容」，但還是遠比按鈕本身低調。
+// 剩餘生成次數的提示：依 Figma node 2108:26356，跟取消/產生內容同一排、緊靠
+// 在按鈕左邊（不是獨立一行疊在按鈕下方）。
 .quota-hint {
-	margin-top: 2px;
+	flex: 1;
 	text-align: right;
 	font-size: 14px;
-	color: var(--colors-neutral-text-color-text-secondary);
+	color: var(--colors-neutral-text-color-text);
 }
 
 .ai-ready-block {
@@ -872,7 +850,7 @@ export default {
 	font-size: 14px;
 	font-weight: 600;
 	color: var(--colors-base-purple-6);
-	margin-bottom: var(--space-margin-sm);
+	margin-bottom: var(--space-margin-xs);
 
 	svg {
 		width: 16px;
@@ -886,7 +864,7 @@ export default {
 	color: var(--colors-neutral-text-color-text-tertiary);
 	cursor: pointer;
 	padding: 5px;
-	border-radius: var(--border-radius-sm);
+	border-radius: var(--border-radius);
 
 	&:hover {
 		background: rgba(0, 0, 0, 0.04);
@@ -909,17 +887,11 @@ export default {
 	color: var(--colors-neutral-text-color-text);
 	cursor: pointer;
 	padding: 0 7px;
-	border-radius: var(--border-radius-sm);
+	border-radius: var(--border-radius);
 	line-height: 22px;
 
 	&:hover {
 		background: rgba(0, 0, 0, 0.04);
-	}
-
-	svg {
-		width: 14px;
-		height: 14px;
-		flex-shrink: 0;
 	}
 }
 
@@ -930,7 +902,7 @@ export default {
 	font-size: 12px;
 	color: var(--colors-neutral-text-color-text-tertiary);
 	line-height: 1.4;
-	margin-top: var(--space-margin-sm);
+	margin-top: var(--space-margin-xs);
 
 	svg {
 		width: 14px;
@@ -941,78 +913,31 @@ export default {
 	}
 }
 
-.sugg-band {
-	position: relative;
-
-	&::before,
-	&::after {
-		content: '';
-		position: absolute;
-		top: 0;
-		bottom: 0;
-		width: 68px;
-		pointer-events: none;
-		opacity: 0;
-		transition: opacity .12s;
-	}
-
-	&::before {
-		left: 0;
-		background: linear-gradient(to left, rgba(249, 240, 255, 0), var(--colors-base-purple-1) 65%);
-	}
-
-	&::after {
-		right: 0;
-		background: linear-gradient(to right, rgba(249, 240, 255, 0), var(--colors-base-purple-1) 65%);
-	}
-
-	&.has-prev-fade::before {
-		opacity: 1;
-	}
-
-	&.has-next-fade::after {
-		opacity: 1;
-	}
+// 建議清單：依 Figma node 2108:26356，垂直堆疊的卡片，不是水平捲動的輪播——
+// 每張卡片編號是純文字（沒有圓形底色），邊框是 purple-3。
+.sugg-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
 }
 
-.sugg-track {
+.sugg-card {
 	display: flex;
 	align-items: flex-start;
 	gap: 8px;
-	overflow-x: auto;
-	scroll-snap-type: x mandatory;
-	scrollbar-width: none;
-	padding-right: 34px;
-
-	&::-webkit-scrollbar {
-		display: none;
-	}
-}
-
-.sugg-item {
-	position: relative;
-	scroll-snap-align: start;
-	flex: 0 0 320px;
-	width: 320px;
+	width: 100%;
 	box-sizing: border-box;
 	background: var(--colors-neutral-color-bg-base);
-	border: 1px solid var(--colors-base-purple-2);
+	border: 1px solid var(--colors-base-purple-3);
 	border-radius: var(--border-radius-lg);
 	padding: var(--space-margin-sm) var(--space-margin);
 	cursor: pointer;
-	display: flex;
-	gap: 8px;
-	align-items: flex-start;
+	text-align: left;
 	transition: border-color .12s, box-shadow .12s;
 
 	&:hover {
 		border-color: var(--colors-base-purple-6);
 		box-shadow: 0 2px 10px rgba(114, 46, 209, .14);
-	}
-
-	&.wide {
-		flex: 0 0 600px;
-		width: 600px;
 	}
 
 	&.applied {
@@ -1021,64 +946,69 @@ export default {
 	}
 }
 
-.sugg-item.applied .idx {
-	background: var(--colors-base-purple-6);
-	color: #fff;
+.sugg-card.applied .sugg-idx {
+	color: var(--colors-base-purple-6);
 }
 
-.sugg-item .idx {
-	display: flex;
-	align-items: center;
-	justify-content: center;
+.sugg-idx {
+	flex-shrink: 0;
 	width: 20px;
-	height: 20px;
-	border-radius: 50%;
 	font-size: 12px;
 	font-weight: 600;
+	line-height: 20px;
+	text-align: center;
 	color: var(--colors-neutral-text-color-text-quaternary);
-	flex-shrink: 0;
 }
 
-.sugg-item .txt {
+.sugg-text-wrap {
+	display: block;
+	position: relative;
+	flex: 1;
+	min-width: 0;
+
+	// 內容真的超出 140px 才出現：卡片下緣的漸層淡出提示，讓使用者一眼就知道
+	// 「這裡還能往下捲」，不依賴瀏覽器捲軸本身的顯示行為（macOS 預設捲軸只有
+	// 捲動當下才會出現，光看畫面很容易誤以為內容已經顯示完整）。
+	&.has-more::after {
+		content: '';
+		position: absolute;
+		left: 0;
+		right: 8px;
+		bottom: 0;
+		height: 28px;
+		background: linear-gradient(to bottom, transparent, var(--colors-neutral-color-bg-base));
+		pointer-events: none;
+	}
+}
+
+.sugg-card.applied .sugg-text-wrap.has-more::after {
+	background: linear-gradient(to bottom, transparent, var(--colors-base-purple-1));
+}
+
+.sugg-text {
+	display: block;
+	max-height: 140px;
+	overflow-y: auto;
+	padding-right: 8px;
 	font-size: 14px;
 	line-height: 1.55;
 	color: var(--colors-neutral-text-color-text-heading);
-	max-height: 240px;
-	overflow-y: auto;
-	padding-right: 2px;
-}
+	white-space: pre-wrap;
+	// 讓捲軸常駐顯示（不吃 macOS 預設「捲動時才出現」的行為），視覺上再加強一次提示。
+	scrollbar-width: thin;
+	scrollbar-color: var(--colors-base-purple-3) transparent;
 
-.sugg-chevron {
-	position: absolute;
-	top: 50%;
-	transform: translateY(-50%);
-	width: 32px;
-	height: 32px;
-	border-radius: 50%;
-	background: var(--colors-neutral-color-bg-base);
-	box-shadow: 0 1px 4px rgba(0, 0, 0, .18);
-	color: var(--colors-neutral-text-color-text);
-	border: none;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	font-size: 18px;
-	cursor: pointer;
-	line-height: 1;
-	padding: 0;
-	z-index: 1;
-
-	&.prev {
-		left: 2px;
+	&::-webkit-scrollbar {
+		width: 6px;
 	}
 
-	&.next {
-		right: 2px;
+	&::-webkit-scrollbar-track {
+		background: transparent;
 	}
 
-	&:disabled {
-		opacity: 0;
-		pointer-events: none;
+	&::-webkit-scrollbar-thumb {
+		background: var(--colors-base-purple-3);
+		border-radius: 3px;
 	}
 }
 </style>
