@@ -163,6 +163,9 @@ export default {
 	emits: ['navigate'],
 	inject: {
 		sharedAiStatus: {default: null},
+		// 側欄紫點統一規則需要的兩個共用狀態：某節點建議是否已看過、以及已解鎖界線
+		sharedAiSeen: {default: null},
+		sharedAiUnlock: {default: null},
 	},
 	data() {
 		const sidemenu = getSidemenu(true);
@@ -218,9 +221,28 @@ export default {
 			const activeIdx = menu.children?.findIndex(child => child.id === this.activeNodeId);
 			return activeIdx >= 0 ? activeIdx : menu.children?.length || 0;
 		},
+		// 側欄紫點統一規則：已解鎖（走得到）且非當前節點才可能顯示；生成中→灰點、
+		// 生成完成且尚未看過→紫點；看過、未解鎖、當前節點都不亮
 		dotState(nodeId) {
+			// 當前節點直接看得到建議，不亮點
+			if (nodeId === this.activeNodeId) {
+				return null;
+			}
+			// 未解鎖（step 超過使用者走到的最遠步驟）不亮點
+			const step = this.steps[nodeId] ? this.steps[nodeId].step : null;
+			const maxStep = this.sharedAiUnlock ? this.sharedAiUnlock.maxStep : Infinity;
+			if (step === null || step > maxStep) {
+				return null;
+			}
 			const status = this.sharedAiStatus ? this.sharedAiStatus[nodeId] : null;
-			return status === 'generating' || status === 'ready' ? status : null;
+			if (status === 'generating') {
+				return 'generating';
+			}
+			const seen = this.sharedAiSeen ? this.sharedAiSeen[nodeId] : false;
+			if (status === 'ready' && !seen) {
+				return 'ready';
+			}
+			return null;
 		},
 	},
 };
