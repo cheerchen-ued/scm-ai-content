@@ -135,6 +135,8 @@ export default {
 			// 已解鎖界線：使用者走到過的最遠步驟索引（單調遞增）；step 大於它的節點視為尚未解鎖
 			aiUnlock: {maxStep: STEP_MAP.productBasicInfo.step},
 			toasts: [],
+			// 目前正在累加的那則完成通知 toast id：讓錯開完成的節點併進同一則，而非連跳多則
+			activeToastId: null,
 		};
 	},
 	computed: {
@@ -161,13 +163,14 @@ export default {
 			this.aiFieldStatus[sourceId] = 'generating';
 			// 新一輪生成：把「看過」重置，這輪完成後才會重新亮紫點
 			this.aiSeen[sourceId] = false;
-			// 不管是共用素材那三個欄位、還是行程管理各自獨立的生成，都算用掉一次共用額度
+			// 一次生成動作算一次共用額度（不論連動幾個節點）
 			this.aiQuotaState.used = Math.min(this.aiQuotaState.used + 1, this.aiQuotaState.limit);
 			if (!SHARED_MATERIAL_FIELD_IDS.includes(sourceId)) {
 				return;
 			}
+			// 共用素材：重新生成一律連動全部三個節點（不論先前狀態）一起進入生成中、重置看過
 			SHARED_MATERIAL_FIELD_IDS.forEach(id => {
-				if (id === sourceId || this.aiFieldStatus[id] !== 'idle') {
+				if (id === sourceId) {
 					return;
 				}
 				this.aiFieldStatus[id] = 'generating';
@@ -175,28 +178,32 @@ export default {
 			});
 		},
 		handleFieldGenerated(sourceId) {
-			const readied = [sourceId];
-			this.aiFieldStatus[sourceId] = 'ready';
-			if (SHARED_MATERIAL_FIELD_IDS.includes(sourceId)) {
-				SHARED_MATERIAL_FIELD_IDS.forEach(id => {
-					if (id === sourceId || this.aiFieldStatus[id] !== 'generating') {
-						return;
-					}
-					this.aiFieldStatus[id] = 'ready';
-					readied.push(id);
-				});
+			// 觸發的節點此刻完成
+			this.completeField(sourceId);
+			if (!SHARED_MATERIAL_FIELD_IDS.includes(sourceId)) {
+				// 行程管理等獨立流程：只有自己
+				return;
 			}
-			// 若建議是在「當前節點」完成的，代表使用者正看著它 → 直接算看過（不亮紫點、不通知）
-			readied.forEach(id => {
-				if (id === this.currentNode) {
-					this.aiSeen[id] = true;
-				}
+			// 其餘共用節點模擬「各自不同的生成時間」錯開陸續完成（真實情況三個不會同時好）；
+			// 錯開完成也只會併進同一則 toast（見 notifyReady），不會連跳多則
+			const others = SHARED_MATERIAL_FIELD_IDS.filter(
+				id => id !== sourceId && this.aiFieldStatus[id] === 'generating',
+			);
+			others.forEach((id, i) => {
+				setTimeout(() => this.completeField(id), (i + 1) * 900);
 			});
-			// 統一規則：只通知「已解鎖 && 非當前 && 尚未看過」的節點，合併成一則 toast；
-			// 其餘（當前節點自己看得到、未解鎖走不到）都不通知，未解鎖的交給側欄紫點在解鎖後接手
-			const notify = readied.filter(id => this.isNotifiable(id));
-			if (notify.length) {
-				this.pushToast(notify);
+		},
+		// 單一節點完成：標成 ready；在當前節點完成＝已看過（不亮點不通知）；符合可提示規則就併入通知
+		completeField(fieldId) {
+			if (this.aiFieldStatus[fieldId] !== 'generating') {
+				return;
+			}
+			this.aiFieldStatus[fieldId] = 'ready';
+			if (fieldId === this.currentNode) {
+				this.aiSeen[fieldId] = true;
+			}
+			if (this.isNotifiable(fieldId)) {
+				this.notifyReady(fieldId);
 			}
 		},
 		handleFieldApplied(fieldId) {
@@ -213,13 +220,26 @@ export default {
 			}
 			return this.aiFieldStatus[fieldId] === 'ready' && !this.aiSeen[fieldId];
 		},
-		// 無 CTA 的提醒 toast：合併多個節點成一則，只陳述「已備好建議」，不帶查看動作（不打斷當前操作）
-		pushToast(fieldIds) {
-			const label = fieldIds.map(id => AI_FIELD_META[id].label).join('、');
+		// 無 CTA 的提醒 toast，且「一次生成只有一則」：各節點錯開完成時併進同一則、
+		// 累加欄位名稱並重設自動消失倒數，不會因完成時間不同而連跳多則
+		notifyReady(fieldId) {
+			const active = this.activeToastId
+				? this.toasts.find(item => item.id === this.activeToastId)
+				: null;
+			if (active) {
+				if (!active.fieldIds.includes(fieldId)) {
+					active.fieldIds.push(fieldId);
+					active.label = active.fieldIds.map(id => AI_FIELD_META[id].label).join('、');
+				}
+				clearTimeout(active.timer);
+				active.timer = setTimeout(() => this.dismissToast(active.id), 7000);
+				return;
+			}
 			const id = nextToastKey();
-			const toast = {id, label, timer: null};
+			const toast = {id, fieldIds: [fieldId], label: AI_FIELD_META[fieldId].label, timer: null};
 			toast.timer = setTimeout(() => this.dismissToast(id), 7000);
 			this.toasts.push(toast);
+			this.activeToastId = id;
 		},
 		dismissToast(id) {
 			const toast = this.toasts.find(item => item.id === id);
@@ -227,6 +247,9 @@ export default {
 				clearTimeout(toast.timer);
 			}
 			this.toasts = this.toasts.filter(item => item.id !== id);
+			if (this.activeToastId === id) {
+				this.activeToastId = null;
+			}
 		},
 		// hover 時暫停自動消失，避免還沒讀完就被收走；移開後給一小段時間再收
 		pauseToast(toast) {
