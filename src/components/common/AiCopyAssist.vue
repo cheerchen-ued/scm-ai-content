@@ -5,7 +5,7 @@
 		<div
 			v-if="inline || state === 'idle'"
 			class="ai-trigger"
-			:class="{ inline }"
+			:class="{ inline, expanded: state !== 'idle' }"
 			@click="handleTriggerClick">
 			<svg
 				viewBox="0 0 16 16"
@@ -655,6 +655,12 @@ export default {
 
 	&.inline {
 		flex-shrink: 0;
+	}
+
+	// Panel 展開時（依 Figma node 2142:59823）：觸發鍵背景由 purple-1 加深為 purple-2
+	// 標示「作用中」；邊框／文字／圖示維持不變。
+	&.expanded {
+		background: var(--colors-base-purple-2);
 	}
 }
 
