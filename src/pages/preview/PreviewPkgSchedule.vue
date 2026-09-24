@@ -34,7 +34,7 @@
 										viewBox="0 0 16 16"
 										fill="currentColor"
 										v-html="icons.sparkle" />
-									AI 幫寫
+									AI 潤稿
 								</div>
 
 								<div
@@ -45,11 +45,21 @@
 											viewBox="0 0 16 16"
 											fill="currentColor"
 											v-html="icons.sparkle" />
-										AI 幫寫 · 行程介紹
+										生成行程介紹
 									</div>
 									<div class="ai-panel-body">
 										<div class="ai-field-group">
-											<label class="ai-field-label"><span class="required">*</span>行程總時長</label>
+											<label class="ai-field-label"><span class="required">*</span>您的行程表內容為何呢？</label>
+											<a-textarea
+												v-model:value="aiMaterial"
+												class="material-input"
+												:rows="2"
+												:maxlength="2000"
+												show-count
+												placeholder="貼上你的行程，時間、地點等越詳細建議越準確" />
+										</div>
+										<div class="ai-field-group">
+											<label class="ai-field-label"><span class="required">*</span>總時長多久？</label>
 											<div class="form-option d-flex">
 												<a-select
 													v-model:value="aiDuration.day"
@@ -68,24 +78,25 @@
 												<span>分</span>
 											</div>
 										</div>
-										<div class="ai-field-group">
-											<label class="ai-field-label"><span class="required">*</span>行程素材</label>
-											<a-textarea
-												v-model:value="aiMaterial"
-												class="material-input"
-												:rows="2"
-												:maxlength="2000"
-												show-count
-												placeholder="貼上你的行程，時間、地點等越詳細建議越準確" />
-										</div>
 										<div class="ai-disclaimer">
 											<exclamation-circle-filled />
-											產生內容將取代已填寫的行程內容，請確認素材與地點正確後再產生。
+											<div class="ai-disclaimer-lines">
+												<div>1. 產生內容將取代已填寫的行程內容，請確認地點與內容正確後再產生。</div>
+												<div>2. 內容由 AI 生成，僅供參考。請務必確認與實際提供之行程服務相符，如有落差請修改後再使用。</div>
+											</div>
 										</div>
 										<div class="gen-row">
-											<a-button
-												type="text"
-												@click="aiState = 'idle'">
+											<div
+												v-if="showGeneratingHint"
+												class="quota-hint">
+												生成中...可先填寫其他欄位，完成後會通知您
+											</div>
+											<div
+												v-else-if="sharedAiQuota"
+												class="quota-hint">
+												{{ quotaRemaining > 0 ? `今日額度 ${sharedAiQuota.used} / ${sharedAiQuota.limit}` : '今日生成次數已用完，請明天再試' }}
+											</div>
+											<a-button @click="aiState = 'idle'">
 												取消
 											</a-button>
 											<a-button
@@ -94,18 +105,8 @@
 												:loading="generating"
 												:disabled="quotaRemaining === 0"
 												@click="generateSchedule">
-												產生內容
+												產生建議
 											</a-button>
-										</div>
-										<div
-											v-if="showGeneratingHint"
-											class="quota-hint">
-											生成中，可先填寫其他欄位，完成後會通知您
-										</div>
-										<div
-											v-else-if="sharedAiQuota"
-											class="quota-hint">
-											{{ quotaRemaining > 0 ? `今日額度 ${sharedAiQuota.used} / ${sharedAiQuota.limit}` : '今日生成次數已用完，請明天再試' }}
 										</div>
 									</div>
 								</div>
@@ -471,20 +472,25 @@ export default {
 .ai-trigger {
 	display: inline-flex;
 	align-items: center;
-	gap: 6px;
+	justify-content: center;
+	gap: 8px;
 	width: fit-content;
+	height: 32px;
+	box-sizing: border-box;
 	background: var(--colors-base-purple-1);
 	color: var(--colors-base-purple-6);
-	border: 1px solid var(--colors-base-purple-2);
-	border-radius: var(--border-radius-sm);
-	padding: 4px 12px 4px 8px;
-	font-size: 12.5px;
-	font-weight: 600;
+	border: 1px solid var(--colors-base-purple-3);
+	border-radius: var(--border-radius);
+	padding: 0 15px;
+	font-size: 14px;
+	font-weight: 400;
 	cursor: pointer;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, .03), 0 1px 3px rgba(0, 0, 0, .02), 0 2px 2px rgba(0, 0, 0, .02);
 
 	svg {
-		width: 14px;
-		height: 14px;
+		width: 16px;
+		height: 16px;
+		flex-shrink: 0;
 	}
 }
 
@@ -492,15 +498,14 @@ export default {
 	border: 1px solid var(--colors-base-purple-2);
 	background: var(--colors-base-purple-1);
 	border-radius: var(--border-radius-lg);
-	overflow: hidden;
+	padding: var(--space-margin-sm) var(--space-margin) var(--space-margin);
 }
 
 .ai-panel-head {
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	padding: var(--space-margin-sm) var(--space-margin);
-	border-bottom: 1px solid var(--colors-base-purple-2);
+	margin-bottom: var(--space-margin-sm);
 	font-weight: 600;
 	font-size: 14px;
 	color: var(--colors-base-purple-6);
@@ -516,8 +521,6 @@ export default {
 	display: flex;
 	flex-direction: column;
 	gap: var(--space-margin);
-	padding: var(--space-margin);
-	background: #fff;
 }
 
 .ai-field-label {
@@ -528,18 +531,29 @@ export default {
 	margin-bottom: var(--space-margin-xs);
 }
 
+// 依 Figma node 2123:40503：產生前的提示改為黃色警示框（Ant Alert warning 樣式），
+// 兩條編號說明，橘色驚嘆號 icon 靠上對齊。
 .ai-disclaimer {
 	display: flex;
-	align-items: center;
+	align-items: flex-start;
 	gap: var(--space-margin-xs);
-	font-size: 12px;
-	line-height: 20px;
-	color: var(--colors-neutral-text-color-text-secondary);
+	padding: var(--space-margin-sm) var(--space-margin);
+	background: var(--colors-base-orange-1);
+	border: 1px solid var(--colors-base-orange-3);
+	border-radius: var(--border-radius);
+	font-size: 14px;
+	line-height: 22px;
+	color: var(--colors-neutral-text-color-text);
 
 	.anticon {
 		flex-shrink: 0;
+		margin-top: 3px;
 		color: var(--colors-brand-warning-color-warning);
 	}
+}
+
+.ai-disclaimer-lines > div + div {
+	margin-top: 2px;
 }
 
 .material-input {
@@ -572,8 +586,9 @@ export default {
 	}
 }
 
+// 依 Figma node 2123:40503：額度／生成中提示與取消/產生建議同一列，靠左（flex:1）
 .quota-hint {
-	margin-top: var(--space-margin-xxs);
+	flex: 1;
 	text-align: right;
 	font-size: 14px;
 	color: var(--colors-neutral-text-color-text-secondary);
