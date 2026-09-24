@@ -159,9 +159,12 @@
 							<reload-outlined />
 							重新生成
 						</span>
-						<close-outlined
-							class="arb-close"
-							@click="dismiss" />
+						<span
+							class="arb-link"
+							@click="dismiss">
+							<up-outlined />
+							收合
+						</span>
 					</span>
 				</div>
 				<div class="sugg-list">
@@ -192,7 +195,7 @@
 						viewBox="0 0 14 14"
 						fill="currentColor"
 						v-html="icons.warning" />
-					<span>文案內容由 AI 生成，僅供參考。請務必確認內容與實際提供之行程服務相符，如有落差請修改後再使用。</span>
+					<span>文案內容由 AI 生成，僅供參考。請務必確認與實際提供之行程服務相符，如有落差請修改後再使用。</span>
 				</div>
 			</div>
 		</transition>
@@ -201,7 +204,7 @@
 
 <script>
 import {
-	CheckOutlined, CloseOutlined, ReloadOutlined, SmileTwoTone, FrownTwoTone,
+	CheckOutlined, UpOutlined, ReloadOutlined, SmileTwoTone, FrownTwoTone,
 } from '@ant-design/icons-vue';
 
 // 不滿意時可複選的原因標籤，固定順序（依設計稿）
@@ -237,7 +240,7 @@ export default {
 	name: 'AiCopyAssist',
 	components: {
 		CheckOutlined,
-		CloseOutlined,
+		UpOutlined,
 		ReloadOutlined,
 		SmileTwoTone,
 		FrownTwoTone,
@@ -298,7 +301,7 @@ export default {
 			// 是否已經在本機生成過一次建議（給沒有 fieldId/共用狀態的正式頁面用的本機記憶）
 			hasGeneratedOnce: false,
 			generating: false,
-			// 每則建議卡的文字是否超出 140px 上限（實際量測 scrollHeight），超出的才顯示
+			// 每則建議卡的文字是否超出 240px 上限（實際量測 scrollHeight），超出的才顯示
 			// 卡片下緣的漸層提示，讓使用者知道還能往下捲，不是每張卡都套用
 			suggOverflowFlags: [],
 			// 套用建議後的輕量回饋機制：ask（詢問滿意度）→ reasons（不滿意的原因清單）/ thanks（感謝訊息）
@@ -768,12 +771,11 @@ export default {
 
 // 依 Figma node 2108:26356：整個素材面板是同一色調的淺紫卡片，不再分成「紫色
 // 標題列 + 白色內容區」兩段——標題（問句）、素材輸入框、caption 全部都在同一塊
-// 淺紫背景裡，跟按鈕列之間留 --space-margin-lg（20px 的 gap，這裡沿用既有的
-// margin-lg token）的間距。
+// 淺紫背景裡，跟按鈕列之間留 --space-margin-md（20px 的 gap）的間距。
 .ai-panel {
 	display: flex;
 	flex-direction: column;
-	gap: var(--space-margin-lg);
+	gap: var(--space-margin-md);
 	background: var(--colors-base-purple-1);
 	border: 1px solid var(--colors-base-purple-2);
 	border-radius: var(--border-radius-lg);
@@ -859,19 +861,6 @@ export default {
 	}
 }
 
-.arb-close {
-	font-size: 14px;
-	color: var(--colors-neutral-text-color-text-tertiary);
-	cursor: pointer;
-	padding: 5px;
-	border-radius: var(--border-radius);
-
-	&:hover {
-		background: rgba(0, 0, 0, 0.04);
-		color: var(--colors-neutral-text-color-text);
-	}
-}
-
 .arb-actions {
 	margin-left: auto;
 	display: flex;
@@ -908,7 +897,7 @@ export default {
 		width: 14px;
 		height: 14px;
 		flex-shrink: 0;
-		color: var(--colors-brand-warning-color-warning);
+		color: var(--colors-neutral-text-color-text-tertiary);
 		margin-top: 1px;
 	}
 }
@@ -930,7 +919,7 @@ export default {
 	background: var(--colors-neutral-color-bg-base);
 	border: 1px solid var(--colors-base-purple-3);
 	border-radius: var(--border-radius-lg);
-	padding: var(--space-margin-sm) var(--space-margin);
+	padding: var(--space-margin-sm);
 	cursor: pointer;
 	text-align: left;
 	transition: border-color .12s, box-shadow .12s;
@@ -966,7 +955,7 @@ export default {
 	flex: 1;
 	min-width: 0;
 
-	// 內容真的超出 140px 才出現：卡片下緣的漸層淡出提示，讓使用者一眼就知道
+	// 內容真的超出 240px 才出現：卡片下緣的漸層淡出提示，讓使用者一眼就知道
 	// 「這裡還能往下捲」，不依賴瀏覽器捲軸本身的顯示行為（macOS 預設捲軸只有
 	// 捲動當下才會出現，光看畫面很容易誤以為內容已經顯示完整）。
 	&.has-more::after {
@@ -987,7 +976,7 @@ export default {
 
 .sugg-text {
 	display: block;
-	max-height: 140px;
+	max-height: 240px;
 	overflow-y: auto;
 	padding-right: 8px;
 	font-size: 14px;
