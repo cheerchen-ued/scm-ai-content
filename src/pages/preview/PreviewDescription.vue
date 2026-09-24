@@ -276,6 +276,7 @@
 								field-label="商品說明"
 								field-id="productDescription"
 								:suggestions="aiProdDescSuggestions"
+								wide-suggestions
 								:prep-fields="aiPrepFields"
 								:existing-content="formData.prodDesc"
 								@apply="onAiApplyProdDesc"

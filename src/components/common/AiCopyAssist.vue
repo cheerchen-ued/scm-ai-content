@@ -167,7 +167,9 @@
 						</span>
 					</span>
 				</div>
-				<div class="sugg-list">
+				<div
+					class="sugg-list"
+					:class="{ wide: wideSuggestions }">
 					<button
 						v-for="(text, i) in suggestions"
 						:key="i"
@@ -278,6 +280,13 @@ export default {
 		// 為 true 時，按鈕不論任何狀態都會顯示，不會被素材面板/建議清單取代；
 		// 面板/建議清單則由外層頁面用 CSS Grid 排到輸入框整排下方（見 PreviewBasicInfo.vue）。
 		inline: {
+			type: Boolean,
+			default: false,
+		},
+		// 選填：建議清單改用「雙欄橫排」呈現（依 Figma node 2138:37559 商品說明的顯示建議
+		// 區塊：因內容較長改由橫式並排，每張卡片 max-height 480、超過內文可捲動）。只有
+		// 商品說明頁會傳入，其餘欄位維持單欄直式。
+		wideSuggestions: {
 			type: Boolean,
 			default: false,
 		},
@@ -914,6 +923,18 @@ export default {
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
+}
+
+// 商品說明的顯示建議區塊：依 Figma node 2138:37559，因內容較長改雙欄橫排（等寬），
+// 每張卡片最高 480px、超過內文可捲動；其餘欄位維持單欄直式。
+.sugg-list.wide {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	align-items: start;
+}
+
+.sugg-list.wide .sugg-text {
+	max-height: 480px;
 }
 
 .sugg-card {
