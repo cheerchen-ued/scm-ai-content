@@ -304,8 +304,9 @@ export default {
 	min-width: 0;
 	color: var(--colors-neutral-text-color-text-secondary);
 
+	// 依 Figma node 2123:40596：收合且尚未填寫完整時以紅字呈現（與必填星號同色）
 	&.incomplete {
-		color: var(--colors-neutral-text-color-text-disabled);
+		color: var(--colors-brand-error-color-error);
 	}
 }
 

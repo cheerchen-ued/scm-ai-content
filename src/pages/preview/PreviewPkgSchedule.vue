@@ -53,10 +53,10 @@
 											<a-textarea
 												v-model:value="aiMaterial"
 												class="material-input"
-												:rows="2"
+												:rows="10"
 												:maxlength="2000"
 												show-count
-												placeholder="貼上你的行程，時間、地點等越詳細建議越準確" />
+												:placeholder="materialPlaceholder" />
 										</div>
 										<div class="ai-field-group">
 											<label class="ai-field-label"><span class="required">*</span>總時長多久？</label>
@@ -283,6 +283,20 @@ const ICON_SPARKLE = '' +
 	' 6.27705L5.63246 8.21082H4.36754L3.72295 6.27705L1.78918 5.63246V4.36754L3.72295 3.72295ZM5 4.10818L4.88246 4.46082L4.46082 4.88246L4.10819' +
 	' 5L4.46082 5.11754L4.88246 5.53918L5 5.89181L5.11754 5.53918L5.53918 5.11754L5.89182 5L5.53918 4.88246L5.11754 4.46082L5 4.10818Z" />';
 
+// 「您的行程表內容為何呢？」textarea 的 placeholder，依 Figma node 2123:40525 的多行範例
+const MATERIAL_PLACEHOLDER = [
+	'請填寫行程時間、地點與活動內容，例如：',
+	'',
+	'08:30 陽明山遊客中心集合',
+	'09:00 小油坑地質景觀區，近距離觀察火山地形與硫磺噴氣孔（停留約 40 分鐘）',
+	'10:30 冷水坑生態步道，輕鬆健走欣賞牛群放牧景色',
+	'12:00 竹子湖午餐時間，品嚐在地野菜料理（約 1 小時）',
+	'13:30 竹子湖海芋田拍照時間，依季節提供不同花況（停留約 1 小時）',
+	'15:00 天母古道下山，沿途可眺望台北盆地',
+	'16:30 天母商圈自由活動',
+	'17:30 賦歸，返回集合地點',
+].join('\n');
+
 let itemKeySeed = 0;
 const nextItemKey = () => {
 	itemKeySeed += 1;
@@ -365,6 +379,7 @@ export default {
 			},
 			aiState: 'idle', // idle | panelOpen
 			aiMaterial: '',
+			materialPlaceholder: MATERIAL_PLACEHOLDER,
 			aiDuration: {
 				day: undefined,
 				hour: undefined,
