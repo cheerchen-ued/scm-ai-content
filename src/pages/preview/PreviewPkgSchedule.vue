@@ -34,7 +34,7 @@
 										viewBox="0 0 16 16"
 										fill="currentColor"
 										v-html="icons.sparkle" />
-									AI 幫寫
+									AI 潤稿
 								</div>
 
 								<div
@@ -45,11 +45,21 @@
 											viewBox="0 0 16 16"
 											fill="currentColor"
 											v-html="icons.sparkle" />
-										AI 幫寫 · 行程介紹
+										生成行程介紹
 									</div>
 									<div class="ai-panel-body">
 										<div class="ai-field-group">
-											<label class="ai-field-label"><span class="required">*</span>行程總時長</label>
+											<label class="ai-field-label"><span class="required">*</span>您的行程表內容為何呢？</label>
+											<a-textarea
+												v-model:value="aiMaterial"
+												class="material-input"
+												:rows="10"
+												:maxlength="2000"
+												show-count
+												:placeholder="materialPlaceholder" />
+										</div>
+										<div class="ai-field-group">
+											<label class="ai-field-label"><span class="required">*</span>總時長多久？</label>
 											<div class="form-option d-flex">
 												<a-select
 													v-model:value="aiDuration.day"
@@ -68,24 +78,25 @@
 												<span>分</span>
 											</div>
 										</div>
-										<div class="ai-field-group">
-											<label class="ai-field-label"><span class="required">*</span>行程素材</label>
-											<a-textarea
-												v-model:value="aiMaterial"
-												class="material-input"
-												:rows="2"
-												:maxlength="2000"
-												show-count
-												placeholder="貼上你的行程，時間、地點等越詳細建議越準確" />
-										</div>
 										<div class="ai-disclaimer">
 											<exclamation-circle-filled />
-											產生內容將取代已填寫的行程內容，請確認素材與地點正確後再產生。
+											<div class="ai-disclaimer-lines">
+												<div>1. 產生內容將取代已填寫的行程內容，請確認地點與內容正確後再產生。</div>
+												<div>2. 內容由 AI 生成，僅供參考。請務必確認與實際提供之行程服務相符，如有落差請修改後再使用。</div>
+											</div>
 										</div>
 										<div class="gen-row">
-											<a-button
-												type="text"
-												@click="aiState = 'idle'">
+											<div
+												v-if="showGeneratingHint"
+												class="quota-hint">
+												生成中...可先填寫其他欄位，完成後會通知您
+											</div>
+											<div
+												v-else-if="sharedAiQuota"
+												class="quota-hint">
+												{{ quotaRemaining > 0 ? `今日額度 ${sharedAiQuota.used} / ${sharedAiQuota.limit}` : '今日生成次數已用完，請明天再試' }}
+											</div>
+											<a-button @click="aiState = 'idle'">
 												取消
 											</a-button>
 											<a-button
@@ -94,18 +105,8 @@
 												:loading="generating"
 												:disabled="quotaRemaining === 0"
 												@click="generateSchedule">
-												產生內容
+												產生建議
 											</a-button>
-										</div>
-										<div
-											v-if="showGeneratingHint"
-											class="quota-hint">
-											生成中，可先填寫其他欄位，完成後會通知您
-										</div>
-										<div
-											v-else-if="sharedAiQuota"
-											class="quota-hint">
-											{{ quotaRemaining > 0 ? `今日額度 ${sharedAiQuota.used} / ${sharedAiQuota.limit}` : '今日生成次數已用完，請明天再試' }}
 										</div>
 									</div>
 								</div>
@@ -119,19 +120,19 @@
 								<div class="form-option d-flex">
 									<a-select
 										v-model:value="totalDuration.day"
-										placeholder="天"
+										placeholder="天數"
 										:disabled="aiState === 'panelOpen'"
 										style="width: 160px" />
 									<span>天</span>
 									<a-select
 										v-model:value="totalDuration.hour"
-										placeholder="時"
+										placeholder="時數"
 										:disabled="aiState === 'panelOpen'"
 										style="width: 160px" />
 									<span>時</span>
 									<a-select
 										v-model:value="totalDuration.minute"
-										placeholder="分"
+										placeholder="分數"
 										:disabled="aiState === 'panelOpen'"
 										style="width: 160px" />
 									<span>分</span>
@@ -282,6 +283,20 @@ const ICON_SPARKLE = '' +
 	' 6.27705L5.63246 8.21082H4.36754L3.72295 6.27705L1.78918 5.63246V4.36754L3.72295 3.72295ZM5 4.10818L4.88246 4.46082L4.46082 4.88246L4.10819' +
 	' 5L4.46082 5.11754L4.88246 5.53918L5 5.89181L5.11754 5.53918L5.53918 5.11754L5.89182 5L5.53918 4.88246L5.11754 4.46082L5 4.10818Z" />';
 
+// 「您的行程表內容為何呢？」textarea 的 placeholder，依 Figma node 2123:40525 的多行範例
+const MATERIAL_PLACEHOLDER = [
+	'請填寫行程時間、地點與活動內容，例如：',
+	'',
+	'08:30 陽明山遊客中心集合',
+	'09:00 小油坑地質景觀區，近距離觀察火山地形與硫磺噴氣孔（停留約 40 分鐘）',
+	'10:30 冷水坑生態步道，輕鬆健走欣賞牛群放牧景色',
+	'12:00 竹子湖午餐時間，品嚐在地野菜料理（約 1 小時）',
+	'13:30 竹子湖海芋田拍照時間，依季節提供不同花況（停留約 1 小時）',
+	'15:00 天母古道下山，沿途可眺望台北盆地',
+	'16:30 天母商圈自由活動',
+	'17:30 賦歸，返回集合地點',
+].join('\n');
+
 let itemKeySeed = 0;
 const nextItemKey = () => {
 	itemKeySeed += 1;
@@ -340,6 +355,8 @@ export default {
 		sharedAiActions: {default: null},
 		// 一個帳號一天共用的生成額度（{used, limit}），跟商品名稱/商品亮點/商品說明共用同一組
 		sharedAiQuota: {default: null},
+		// 目前停留在哪個節點；用來偵測「離開後再次進入行程管理」以收合行程模組
+		sharedActiveNode: {default: null},
 	},
 	components: {
 		PkgSubCard,
@@ -364,6 +381,7 @@ export default {
 			},
 			aiState: 'idle', // idle | panelOpen
 			aiMaterial: '',
+			materialPlaceholder: MATERIAL_PLACEHOLDER,
 			aiDuration: {
 				day: undefined,
 				hour: undefined,
@@ -387,8 +405,28 @@ export default {
 		quotaRemaining() {
 			return this.sharedAiQuota ? Math.max(this.sharedAiQuota.limit - this.sharedAiQuota.used, 0) : null;
 		},
+		// 使用者目前是否停留在行程管理節點；用來偵測「離開後再次進入」
+		scheduleActive() {
+			return this.sharedActiveNode ? this.sharedActiveNode.current === 'productPkgSchedule' : false;
+		},
+	},
+	watch: {
+		// 再次進入行程管理時，已生成的天數模組內「行程」一律預設收合（天數維持展開，方便閱讀）
+		scheduleActive(isActive) {
+			if (isActive) {
+				this.collapseAllActivities();
+			}
+		},
 	},
 	methods: {
+		// 收合所有天數模組內的行程卡（天數層 day.isExpanded 不動，維持展開）
+		collapseAllActivities() {
+			this.days.forEach(day => {
+				day.schedules.forEach(item => {
+					item.expanded = false;
+				});
+			});
+		},
 		generateSchedule() {
 			this.generating = true;
 			this.showGeneratingHint = false;
@@ -471,20 +509,25 @@ export default {
 .ai-trigger {
 	display: inline-flex;
 	align-items: center;
-	gap: 6px;
+	justify-content: center;
+	gap: 8px;
 	width: fit-content;
+	height: 32px;
+	box-sizing: border-box;
 	background: var(--colors-base-purple-1);
 	color: var(--colors-base-purple-6);
-	border: 1px solid var(--colors-base-purple-2);
-	border-radius: var(--border-radius-sm);
-	padding: 4px 12px 4px 8px;
-	font-size: 12.5px;
-	font-weight: 600;
+	border: 1px solid var(--colors-base-purple-3);
+	border-radius: var(--border-radius);
+	padding: 0 15px;
+	font-size: 14px;
+	font-weight: 400;
 	cursor: pointer;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, .03), 0 1px 3px rgba(0, 0, 0, .02), 0 2px 2px rgba(0, 0, 0, .02);
 
 	svg {
-		width: 14px;
-		height: 14px;
+		width: 16px;
+		height: 16px;
+		flex-shrink: 0;
 	}
 }
 
@@ -492,15 +535,14 @@ export default {
 	border: 1px solid var(--colors-base-purple-2);
 	background: var(--colors-base-purple-1);
 	border-radius: var(--border-radius-lg);
-	overflow: hidden;
+	padding: var(--space-margin-sm) var(--space-margin) var(--space-margin);
 }
 
 .ai-panel-head {
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	padding: var(--space-margin-sm) var(--space-margin);
-	border-bottom: 1px solid var(--colors-base-purple-2);
+	margin-bottom: var(--space-margin-sm);
 	font-weight: 600;
 	font-size: 14px;
 	color: var(--colors-base-purple-6);
@@ -516,8 +558,6 @@ export default {
 	display: flex;
 	flex-direction: column;
 	gap: var(--space-margin);
-	padding: var(--space-margin);
-	background: #fff;
 }
 
 .ai-field-label {
@@ -528,18 +568,29 @@ export default {
 	margin-bottom: var(--space-margin-xs);
 }
 
+// 依 Figma node 2123:40503：產生前的提示改為黃色警示框（Ant Alert warning 樣式），
+// 兩條編號說明，橘色驚嘆號 icon 靠上對齊。
 .ai-disclaimer {
 	display: flex;
-	align-items: center;
+	align-items: flex-start;
 	gap: var(--space-margin-xs);
-	font-size: 12px;
-	line-height: 20px;
-	color: var(--colors-neutral-text-color-text-secondary);
+	padding: var(--space-margin-sm) var(--space-margin);
+	background: var(--colors-base-orange-1);
+	border: 1px solid var(--colors-base-orange-3);
+	border-radius: var(--border-radius);
+	font-size: 14px;
+	line-height: 22px;
+	color: var(--colors-neutral-text-color-text);
 
 	.anticon {
 		flex-shrink: 0;
+		margin-top: 3px;
 		color: var(--colors-brand-warning-color-warning);
 	}
+}
+
+.ai-disclaimer-lines > div + div {
+	margin-top: 2px;
 }
 
 .material-input {
@@ -572,8 +623,9 @@ export default {
 	}
 }
 
+// 依 Figma node 2123:40503：額度／生成中提示與取消/產生建議同一列，靠左（flex:1）
 .quota-hint {
-	margin-top: var(--space-margin-xxs);
+	flex: 1;
 	text-align: right;
 	font-size: 14px;
 	color: var(--colors-neutral-text-color-text-secondary);

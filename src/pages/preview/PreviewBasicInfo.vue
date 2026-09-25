@@ -618,10 +618,16 @@ export default {
 }
 
 :deep(.ai-panel),
-:deep(.ai-ready-block),
-:deep(.ai-feedback) {
+:deep(.ai-ready-block) {
 	grid-column: 1 / -1;
 	grid-row: 3;
+}
+
+// 回饋區塊排在建議清單（grid-row 3）下方，避免兩者同時出現時重疊
+// （依 Figma 回饋機制：一生成建議即顯示，會與 ready 區塊並存）
+:deep(.ai-feedback) {
+	grid-column: 1 / -1;
+	grid-row: 4;
 }
 
 // 實驗版面「輸入框內建 AI」，依 Figma node 2107:302371
