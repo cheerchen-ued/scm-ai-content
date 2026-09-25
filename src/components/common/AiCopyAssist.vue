@@ -148,13 +148,13 @@
 						<a-button
 							class="fb-btn"
 							@click="markSatisfied">
-							<smile-two-tone />
+							<smile-outlined />
 							滿意
 						</a-button>
 						<a-button
 							class="fb-btn"
 							@click="markUnsatisfied">
-							<frown-two-tone />
+							<frown-outlined />
 							不滿意
 						</a-button>
 					</span>
@@ -200,7 +200,7 @@
 
 <script>
 import {
-	CheckOutlined, UpOutlined, ReloadOutlined, SmileTwoTone, FrownTwoTone,
+	CheckOutlined, UpOutlined, ReloadOutlined, SmileOutlined, FrownOutlined,
 } from '@ant-design/icons-vue';
 
 // 不滿意時可複選的原因標籤，固定順序（依設計稿）
@@ -238,8 +238,8 @@ export default {
 		CheckOutlined,
 		UpOutlined,
 		ReloadOutlined,
-		SmileTwoTone,
-		FrownTwoTone,
+		SmileOutlined,
+		FrownOutlined,
 	},
 	props: {
 		fieldLabel: {
@@ -718,9 +718,9 @@ export default {
 	gap: 8px;
 }
 
-// 滿意/不滿意就是一般的 a-button（預設樣式：白底、灰框、黑字），只有圓角改成
-// 膠囊形狀比照設計稿，不另外疊加品牌色——顏色交給 SmileTwoTone/FrownTwoTone
-// 圖示本身的雙色表達，不是按鈕本身的顏色。
+// 滿意/不滿意就是一般的 a-button（預設樣式：白底、灰框、黑字），只有圓角改成膠囊形狀比照
+// 設計稿。依 Figma node 2154:52187 icon 改用單色的 SmileOutlined/FrownOutlined，顏色跟隨
+// 按鈕文字（深色 currentColor），不再用雙色 TwoTone 的品牌藍。
 .fb-btn {
 	display: inline-flex;
 	align-items: center;
