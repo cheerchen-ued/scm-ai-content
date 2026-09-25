@@ -355,6 +355,8 @@ export default {
 		sharedAiActions: {default: null},
 		// 一個帳號一天共用的生成額度（{used, limit}），跟商品名稱/商品亮點/商品說明共用同一組
 		sharedAiQuota: {default: null},
+		// 目前停留在哪個節點；用來偵測「離開後再次進入行程管理」以收合行程模組
+		sharedActiveNode: {default: null},
 	},
 	components: {
 		PkgSubCard,
@@ -403,8 +405,28 @@ export default {
 		quotaRemaining() {
 			return this.sharedAiQuota ? Math.max(this.sharedAiQuota.limit - this.sharedAiQuota.used, 0) : null;
 		},
+		// 使用者目前是否停留在行程管理節點；用來偵測「離開後再次進入」
+		scheduleActive() {
+			return this.sharedActiveNode ? this.sharedActiveNode.current === 'productPkgSchedule' : false;
+		},
+	},
+	watch: {
+		// 再次進入行程管理時，已生成的天數模組內「行程」一律預設收合（天數維持展開，方便閱讀）
+		scheduleActive(isActive) {
+			if (isActive) {
+				this.collapseAllActivities();
+			}
+		},
 	},
 	methods: {
+		// 收合所有天數模組內的行程卡（天數層 day.isExpanded 不動，維持展開）
+		collapseAllActivities() {
+			this.days.forEach(day => {
+				day.schedules.forEach(item => {
+					item.expanded = false;
+				});
+			});
+		},
 		generateSchedule() {
 			this.generating = true;
 			this.showGeneratingHint = false;
