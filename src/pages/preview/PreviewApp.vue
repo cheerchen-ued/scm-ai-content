@@ -25,9 +25,7 @@
 			<div
 				v-for="toast in toasts"
 				:key="toast.id"
-				class="ai-toast"
-				@mouseenter="pauseToast(toast)"
-				@mouseleave="resumeToast(toast)">
+				class="ai-toast">
 				<thunderbolt-outlined class="ai-toast-icon" />
 				<div class="ai-toast-text">
 					已經幫你準備好 <strong>{{ toast.label }}</strong> 的建議
@@ -250,16 +248,6 @@ export default {
 			if (this.activeToastId === id) {
 				this.activeToastId = null;
 			}
-		},
-		// hover 時暫停自動消失，避免還沒讀完就被收走；移開後給一小段時間再收
-		pauseToast(toast) {
-			if (toast.timer) {
-				clearTimeout(toast.timer);
-				toast.timer = null;
-			}
-		},
-		resumeToast(toast) {
-			toast.timer = setTimeout(() => this.dismissToast(toast.id), 3000);
 		},
 	},
 };
