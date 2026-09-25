@@ -411,8 +411,15 @@ export default {
 			if (value === 'generating') {
 				this.resetFeedbackForNewGeneration();
 			}
-			if (value === 'ready' && this.state === 'idle') {
-				this.state = 'ready';
+			if (value === 'ready') {
+				if (this.state === 'idle') {
+					// 第一次連動生成：idle→ready 的轉變會由 state watcher 負責顯示回饋
+					this.state = 'ready';
+				} else if (this.state === 'ready' && !this.feedbackHandled) {
+					// 連動節點「重新生成」：state 從上一輪起就一直是 ready（沒有 idle→ready 轉變），
+					// state watcher 不會觸發，這裡補上顯示回饋，跟來源節點重新生成後的行為一致
+					this.showFeedback();
+				}
 			}
 		},
 		state(value) {
