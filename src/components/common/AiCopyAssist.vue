@@ -20,75 +20,6 @@
 			@enter="onExpandEnter"
 			@leave="onExpandLeave">
 			<div
-				v-if="feedback.visible"
-				class="ai-feedback"
-				:class="{ 'fb-card': feedback.phase === 'reasons' }">
-				<template v-if="feedback.phase === 'ask'">
-					<span class="fb-ask-text">這個「{{ fieldLabel }}」建議對您有幫助嗎？</span>
-					<span class="fb-btn-group">
-						<a-button
-							class="fb-btn"
-							@click="markSatisfied">
-							<smile-two-tone />
-							滿意
-						</a-button>
-						<a-button
-							class="fb-btn"
-							@click="markUnsatisfied">
-							<frown-two-tone />
-							不滿意
-						</a-button>
-					</span>
-				</template>
-				<template v-else-if="feedback.phase === 'reasons'">
-					<div class="fb-reasons-title">
-						不滿意原因為何？（可複選）
-					</div>
-					<div class="fb-reasons-list">
-						<button
-							v-for="reason in feedbackReasonOptions"
-							:key="reason"
-							type="button"
-							class="fb-reason-chip"
-							:class="{ active: feedback.reasons.includes(reason) }"
-							@click="toggleFeedbackReason(reason)">
-							{{ reason }}
-						</button>
-					</div>
-					<a-textarea
-						v-model:value="feedback.text"
-						class="fb-text-input"
-						:auto-size="{ minRows: 2, maxRows: 4 }"
-						:maxlength="50"
-						show-count
-						placeholder="其他回饋" />
-					<div class="fb-submit-row">
-						<a-button
-							type="text"
-							class="fb-skip-btn"
-							@click="skipFeedback">
-							略過
-						</a-button>
-						<a-button @click="submitFeedback">
-							送出回饋
-						</a-button>
-					</div>
-				</template>
-				<template v-else>
-					<span class="fb-thanks">
-						<check-outlined />
-						感謝你的回饋！
-					</span>
-				</template>
-			</div>
-		</transition>
-
-		<transition
-			:css="false"
-			@before-enter="onExpandBeforeEnter"
-			@enter="onExpandEnter"
-			@leave="onExpandLeave">
-			<div
 				v-if="state === 'panelOpen'"
 				class="ai-panel">
 				<div class="ai-panel-top">
@@ -199,6 +130,69 @@
 						v-html="icons.warning" />
 					<span>文案內容由 AI 生成，僅供參考。請務必確認與實際提供之行程服務相符，如有落差請修改後再使用。</span>
 				</div>
+			</div>
+		</transition>
+
+		<transition
+			:css="false"
+			@before-enter="onExpandBeforeEnter"
+			@enter="onExpandEnter"
+			@leave="onExpandLeave">
+			<div
+				v-if="feedback.visible"
+				class="ai-feedback"
+				:class="{ 'fb-card': feedback.phase === 'reasons' }">
+				<template v-if="feedback.phase === 'ask'">
+					<span class="fb-ask-text">這個「{{ fieldLabel }}」建議對您有幫助嗎？</span>
+					<span class="fb-btn-group">
+						<a-button
+							class="fb-btn"
+							@click="markSatisfied">
+							<smile-two-tone />
+							滿意
+						</a-button>
+						<a-button
+							class="fb-btn"
+							@click="markUnsatisfied">
+							<frown-two-tone />
+							不滿意
+						</a-button>
+					</span>
+				</template>
+				<template v-else-if="feedback.phase === 'reasons'">
+					<div class="fb-reasons-title">
+						不滿意原因為何？（可複選）
+					</div>
+					<div class="fb-reasons-list">
+						<button
+							v-for="reason in feedbackReasonOptions"
+							:key="reason"
+							type="button"
+							class="fb-reason-chip"
+							:class="{ active: feedback.reasons.includes(reason) }"
+							@click="toggleFeedbackReason(reason)">
+							{{ reason }}
+						</button>
+					</div>
+					<a-textarea
+						v-model:value="feedback.text"
+						class="fb-text-input"
+						:auto-size="{ minRows: 2, maxRows: 4 }"
+						:maxlength="50"
+						show-count
+						placeholder="其他回饋" />
+					<div class="fb-submit-row">
+						<a-button @click="submitFeedback">
+							送出回饋
+						</a-button>
+					</div>
+				</template>
+				<template v-else>
+					<span class="fb-thanks">
+						<check-outlined />
+						感謝你的回饋！
+					</span>
+				</template>
 			</div>
 		</transition>
 	</div>
@@ -313,14 +307,17 @@ export default {
 			// 每則建議卡的文字是否超出 240px 上限（實際量測 scrollHeight），超出的才顯示
 			// 卡片下緣的漸層提示，讓使用者知道還能往下捲，不是每張卡都套用
 			suggOverflowFlags: [],
-			// 套用建議後的輕量回饋機制：ask（詢問滿意度）→ reasons（不滿意的原因清單）/ thanks（感謝訊息）
+			// 依 Figma 回饋機制（node 2154:52483）：一生成建議即顯示的回饋區塊
+			// ask（詢問滿意度）→ reasons（不滿意的原因清單）/ thanks（感謝訊息）
 			feedback: {
 				visible: false,
 				phase: 'ask',
 				reasons: [],
 				text: '',
-				appliedText: '',
 			},
+			// 這一輪生成的回饋是否已處理完（送出滿意／不滿意原因，或未選建議就收合面板、離開頁面）；
+			// 處理過就不再重覆彈出，直到下一次重新生成
+			feedbackHandled: false,
 			feedbackReasonOptions: FEEDBACK_REASON_OPTIONS,
 			icons: {
 				sparkle: ICON_SPARKLE,
@@ -410,6 +407,10 @@ export default {
 		// 同一份素材連動生成好之後，其他共用欄位只要還是 idle（使用者還沒手動關掉過），
 		// 就直接自動顯示建議，不用使用者自己點開「AI 潤稿」才看得到
 		externalStatus(value) {
+			// 連動的新一輪生成開始：重置回饋，等這輪生成好後才會依規則重新彈出
+			if (value === 'generating') {
+				this.resetFeedbackForNewGeneration();
+			}
 			if (value === 'ready' && this.state === 'idle') {
 				this.state = 'ready';
 			}
@@ -418,23 +419,22 @@ export default {
 			if (value === 'ready') {
 				this.hasGeneratedOnce = true;
 				this.$nextTick(() => this.checkSuggOverflow());
+				// 依 Figma 回饋機制：只要一生成建議即顯示回饋區塊（在建議清單下方）；
+				// 這輪已處理過（送出或未選就收合、離開頁面）就不再彈出
+				if (!this.feedbackHandled) {
+					this.showFeedback();
+				}
 			}
-			// 重新打開 AI 潤稿（不管是進素材畫面還是直接看建議）就收起回饋區塊，避免跟新一輪操作擠在一起
-			if (value !== 'idle' && this.feedback.visible) {
+			// 回去重新輸入素材（重新生成）時先收起回饋，等新一批建議好了再顯示
+			if (value === 'panelOpen') {
 				this.hideFeedback();
 			}
 		},
-		// 套用建議後回饋區塊才會出現；一旦欄位內容跟當初套用的不一樣了（使用者自己改過或清空），
-		// 代表回饋的對象已經不存在，要跟著收起，不能繼續掛著一個過時的回饋詢問
-		existingContent(value) {
-			if (this.feedback.visible && (value || '').trim() !== this.feedback.appliedText) {
-				this.hideFeedback();
-			}
-		},
-		// 使用者離開這個欄位所在的節點時，回饋區塊也要收起
+		// 使用者離開這個欄位所在的節點時收起回饋；依 Figma：離開此頁面後再次回來不再顯示
 		isFieldActive(value) {
-			if (!value && this.feedback.visible) {
+			if (!value) {
 				this.hideFeedback();
+				this.feedbackHandled = true;
 			}
 			// 這個欄位在 v-show 隱藏（使用者停留在別的節點）時，如果透過聯動生成跳進
 			// ready，量到的 scrollHeight/clientHeight 都是 0（隱藏元素沒有實際版面），
@@ -488,7 +488,7 @@ export default {
 			// 跳去顯示建議，行為不可預期。建議本身不會因為收合而消失，之後再點一次
 			// 這顆鈕、hasSuggestionsReady 還是會直接帶回同一批建議。
 			if (this.state !== 'idle') {
-				this.state = 'idle';
+				this.collapse();
 				return;
 			}
 			if (this.hasSuggestionsReady) {
@@ -512,7 +512,16 @@ export default {
 		// 建議區塊右上角的關閉按鈕：單純把畫面收回「AI 潤稿」入口，不影響已生成/已套用的內容，
 		// 之後點「AI 潤稿」還是會直接看到同一批建議
 		dismiss() {
+			this.collapse();
+		},
+		// 收合此面板回到「AI 潤稿」入口。依 Figma 回饋機制：沒有選擇（套用）建議就收合
+		// → 回饋區塊消失、且這輪不再彈出；若已套用建議，回饋保留在欄位下方。
+		collapse() {
 			this.state = 'idle';
+			if (this.appliedIndex === null) {
+				this.hideFeedback();
+				this.feedbackHandled = true;
+			}
 		},
 		cancelPanel() {
 			// 已經有準備好的建議，取消（放棄重新生成）一律回到 ready 保留既有建議；
@@ -521,6 +530,8 @@ export default {
 		},
 		generate() {
 			this.generating = true;
+			// 新一輪生成：重置回饋，生成好後才會依規則重新彈出
+			this.resetFeedbackForNewGeneration();
 			if (this.fieldId && this.sharedAiActions) {
 				this.sharedAiActions.generating(this.fieldId);
 			}
@@ -541,29 +552,28 @@ export default {
 			if (this.fieldId && this.sharedAiActions) {
 				this.sharedAiActions.applied(this.fieldId);
 			}
-			this.showFeedback(plainText.trim());
 		},
-		// 套用建議後出現的輕量回饋機制：不能打斷使用者，所以只是欄位下方多一小塊，
-		// 使用者做任何更動（重新打開 AI/欄位內容變了）或離開這個節點都會自動收起（見對應 watch）
-		showFeedback(appliedText) {
+		// 依 Figma 回饋機制（node 2154:52483）：一生成建議即顯示（在建議清單下方），詢問滿意度
+		showFeedback() {
 			this.feedback = {
 				visible: true,
 				phase: 'ask',
 				reasons: [],
 				text: '',
-				appliedText,
 			};
 		},
 		hideFeedback() {
 			this.feedback.visible = false;
 		},
-		// 略過：使用者不想提供不滿意的細節，直接收起回饋區塊，不顯示感謝訊息
-		// （沒有實際送出任何回饋內容，跟「感謝」的情境不同）
-		skipFeedback() {
+		// 新一輪生成時重置：允許回饋重新彈出，並收起上一輪殘留的回饋
+		resetFeedbackForNewGeneration() {
+			this.feedbackHandled = false;
 			this.hideFeedback();
 		},
 		markSatisfied() {
+			// 送出「滿意」＝已送出回饋 → 顯示感謝並標記已處理
 			this.feedback.phase = 'thanks';
+			this.feedbackHandled = true;
 		},
 		markUnsatisfied() {
 			this.feedback.phase = 'reasons';
@@ -578,6 +588,7 @@ export default {
 		},
 		submitFeedback() {
 			this.feedback.phase = 'thanks';
+			this.feedbackHandled = true;
 		},
 		// 素材面板/建議清單/回饋區塊展開收合時，用實際內容高度做平滑的展開動畫，
 		// 而不是直接跳轉；因為每個區塊內容高度都不固定（建議筆數、回饋階段不同），
@@ -695,7 +706,8 @@ export default {
 
 .fb-ask-text {
 	font-size: 14px;
-	color: var(--colors-neutral-text-color-text);
+	// 依 Figma node 2154:52187：詢問文字為次要灰字
+	color: var(--colors-neutral-text-color-text-tertiary);
 }
 
 // 按鈕緊跟在文案後面（只隔一個 row 的 gap），不要用 margin-left: auto
@@ -769,10 +781,6 @@ export default {
 	display: flex;
 	justify-content: flex-end;
 	gap: 8px;
-}
-
-.fb-skip-btn {
-	color: var(--colors-neutral-text-color-text);
 }
 
 .fb-thanks {
