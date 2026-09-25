@@ -230,12 +230,12 @@ export default {
 					active.label = active.fieldIds.map(id => AI_FIELD_META[id].label).join('、');
 				}
 				clearTimeout(active.timer);
-				active.timer = setTimeout(() => this.dismissToast(active.id), 7000);
+				active.timer = setTimeout(() => this.dismissToast(active.id), 4000);
 				return;
 			}
 			const id = nextToastKey();
 			const toast = {id, fieldIds: [fieldId], label: AI_FIELD_META[fieldId].label, timer: null};
-			toast.timer = setTimeout(() => this.dismissToast(id), 7000);
+			toast.timer = setTimeout(() => this.dismissToast(id), 4000);
 			this.toasts.push(toast);
 			this.activeToastId = id;
 		},
