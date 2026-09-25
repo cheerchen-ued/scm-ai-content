@@ -20,29 +20,12 @@
 				</div>
 			</div>
 		</preview-chrome>
-
-		<div class="ai-toast-stack">
-			<div
-				v-for="toast in toasts"
-				:key="toast.id"
-				class="ai-toast">
-				<thunderbolt-outlined class="ai-toast-icon" />
-				<div class="ai-toast-text">
-					已經幫你準備好 <strong>{{ toast.label }}</strong> 的建議
-					<div class="ai-toast-sub">
-						可在左側選單查看標記的欄位
-					</div>
-				</div>
-				<close-outlined
-					class="ai-toast-close"
-					@click="dismissToast(toast.id)" />
-			</div>
-		</div>
 	</a-config-provider>
 </template>
 
 <script>
-import {ThunderboltOutlined, CloseOutlined} from '@ant-design/icons-vue';
+import {h} from 'vue';
+import {notification} from 'ant-design-vue';
 import {generateToken} from 'configs/designSystem';
 import PreviewChrome from 'pages/preview/PreviewChrome';
 import PreviewBasicInfo from 'pages/preview/PreviewBasicInfo';
@@ -72,11 +55,27 @@ const AI_FIELD_META = {
 // 只有這幾個欄位共用同一份素材，生成時才會互相連動狀態；2-2 行程管理是獨立流程，只會更新自己的狀態
 const SHARED_MATERIAL_FIELD_IDS = ['productBasicInfo', 'productHighlight', 'productDescription'];
 
-let toastKeySeed = 0;
-const nextToastKey = () => {
-	toastKeySeed += 1;
-	return `toast_${toastKeySeed}`;
-};
+// 完成通知用 antd notification 呈現：固定 key 讓錯開完成的節點原地更新（累加）成同一則、
+// 不會連跳多則；duration 為自動消失秒數（對應 spec 的 N）
+const NOTIF_KEY = 'ai-suggestion-ready';
+const NOTIF_DURATION = 4;
+
+// AI GenerateText 火花圖示（與 AiCopyAssist 同一份），依設計稿放在通知左側、紫色
+const ICON_SPARKLE = '' +
+	'<path fill-rule="evenodd" clip-rule="evenodd" d="M11.993 6.04654L11.3084 6.73112L12.6021 8.02472L13.2867 7.34014C13.2653 7.26696 13.2368 7.18525' +
+	' 13.2013 7.09982C13.1017 6.8604 12.9681 6.64207 12.8296 6.50362C12.6912 6.36516 12.4728 6.23159 12.2334 6.13203C12.1479 6.0965 12.0662 6.06799' +
+	' 11.993 6.04654ZM11.6593 8.9675L10.3656 7.6739L6.92299 11.1162C6.50559 11.5336 6.25881 12.2125 6.12684 12.8724C6.09861 13.0136 6.07661 13.1489' +
+	' 6.05948 13.2738C6.18423 13.2567 6.31929 13.2347 6.46031 13.2064C7.11992 13.0744 7.79891 12.8275 8.21677 12.4097L11.6593 8.9675ZM5.33333 14C4.66667' +
+	' 14 4.66667 13.9996 4.66667 13.9996L4.66667 13.9983L4.66668 13.9957L4.66672 13.9882L4.66703 13.9637C4.66736 13.9432 4.66801 13.9146 4.66925 13.8787' +
+	'C4.67172 13.807 4.67657 13.7058 4.6861 13.5819C4.7051 13.3349 4.74303 12.9928 4.81939 12.611C4.967 11.8728 5.27935 10.8742 5.98022 10.1733L11.485' +
+	' 4.66897L11.7578 4.66669C12.0505 4.66424 12.4208 4.76597 12.7453 4.90089C13.0829 5.04126 13.4701 5.25848 13.7724 5.56077C14.0747 5.86307 14.292' +
+	' 6.25029 14.4324 6.58784C14.5673 6.91231 14.669 7.28264 14.6666 7.5753L14.6643 7.8482L9.15954 13.3526C8.45845 14.0536 7.46003 14.3661 6.72196' +
+	' 14.5138C6.34019 14.5903 5.99823 14.6282 5.75134 14.6472C5.62744 14.6568 5.52628 14.6616 5.45458 14.6641C5.41871 14.6653 5.39012 14.666 5.36965' +
+	' 14.6663L5.34512 14.6666L5.3376 14.6667L5.33505 14.6667L5.33409 14.6667C5.33409 14.6667 5.33333 14.6667 5.33333 14ZM5.33333 14V14.6667H4.66667' +
+	'V13.9996L5.33333 14Z" />' +
+	'<path fill-rule="evenodd" clip-rule="evenodd" d="M3.72295 3.72295L4.36754 1.78918H5.63246L6.27705 3.72295L8.21082 4.36754V5.63246L6.27705' +
+	' 6.27705L5.63246 8.21082H4.36754L3.72295 6.27705L1.78918 5.63246V4.36754L3.72295 3.72295ZM5 4.10818L4.88246 4.46082L4.46082 4.88246L4.10819' +
+	' 5L4.46082 5.11754L4.88246 5.53918L5 5.89181L5.11754 5.53918L5.53918 5.11754L5.89182 5L5.53918 4.88246L5.11754 4.46082L5 4.10818Z" />';
 
 export default {
 	name: 'PreviewApp',
@@ -86,8 +85,6 @@ export default {
 		PreviewHighlight,
 		PreviewDescription,
 		PreviewPkgSchedule,
-		ThunderboltOutlined,
-		CloseOutlined,
 	},
 	provide() {
 		return {
@@ -132,9 +129,8 @@ export default {
 			},
 			// 已解鎖界線：使用者走到過的最遠步驟索引（單調遞增）；step 大於它的節點視為尚未解鎖
 			aiUnlock: {maxStep: STEP_MAP.productBasicInfo.step},
-			toasts: [],
-			// 目前正在累加的那則完成通知 toast id：讓錯開完成的節點併進同一則，而非連跳多則
-			activeToastId: null,
+			// 目前累加中那則通知涵蓋的節點；用來組標題，並在通知關閉後清空重來
+			notifBatch: [],
 		};
 	},
 	computed: {
@@ -218,108 +214,28 @@ export default {
 			}
 			return this.aiFieldStatus[fieldId] === 'ready' && !this.aiSeen[fieldId];
 		},
-		// 無 CTA 的提醒 toast，且「一次生成只有一則」：各節點錯開完成時併進同一則、
-		// 累加欄位名稱並重設自動消失倒數，不會因完成時間不同而連跳多則
+		// 無 CTA 的完成通知，用 antd notification 呈現。「一次生成只有一則」：各節點錯開完成時
+		// 用固定 key 原地更新、累加節點名稱並重設自動消失倒數，不會連跳多則；關閉後清空 batch 重來
 		notifyReady(fieldId) {
-			const active = this.activeToastId
-				? this.toasts.find(item => item.id === this.activeToastId)
-				: null;
-			if (active) {
-				if (!active.fieldIds.includes(fieldId)) {
-					active.fieldIds.push(fieldId);
-					active.label = active.fieldIds.map(id => AI_FIELD_META[id].label).join('、');
-				}
-				clearTimeout(active.timer);
-				active.timer = setTimeout(() => this.dismissToast(active.id), 4000);
-				return;
+			if (!this.notifBatch.includes(fieldId)) {
+				this.notifBatch.push(fieldId);
 			}
-			const id = nextToastKey();
-			const toast = {id, fieldIds: [fieldId], label: AI_FIELD_META[fieldId].label, timer: null};
-			toast.timer = setTimeout(() => this.dismissToast(id), 4000);
-			this.toasts.push(toast);
-			this.activeToastId = id;
-		},
-		dismissToast(id) {
-			const toast = this.toasts.find(item => item.id === id);
-			if (toast && toast.timer) {
-				clearTimeout(toast.timer);
-			}
-			this.toasts = this.toasts.filter(item => item.id !== id);
-			if (this.activeToastId === id) {
-				this.activeToastId = null;
-			}
+			const names = this.notifBatch.map(id => `「${AI_FIELD_META[id].label}」`).join('');
+			notification.open({
+				key: NOTIF_KEY,
+				message: `已經幫你準備好${names}的建議`,
+				description: '可點擊左側選單標記的節點前往查看',
+				icon: h('span', {
+					style: 'display:inline-flex;color:#722ed1',
+					innerHTML: `<svg viewBox="0 0 16 16" width="24" height="24" fill="currentColor">${ICON_SPARKLE}</svg>`,
+				}),
+				placement: 'bottomRight',
+				duration: NOTIF_DURATION,
+				onClose: () => {
+					this.notifBatch = [];
+				},
+			});
 		},
 	},
 };
 </script>
-
-<style lang="scss" scoped>
-.ai-toast-stack {
-	position: fixed;
-	right: var(--space-margin-lg);
-	bottom: var(--space-margin-lg);
-	z-index: 50;
-	display: flex;
-	flex-direction: column;
-	gap: var(--space-margin-sm);
-	max-width: 340px;
-}
-
-.ai-toast {
-	display: flex;
-	align-items: flex-start;
-	gap: var(--space-margin-xs);
-	background: var(--colors-neutral-color-bg-base);
-	border: 1px solid var(--colors-base-purple-2);
-	border-radius: var(--border-radius-lg);
-	box-shadow: 0 8px 24px rgba(0, 0, 0, .14);
-	padding: var(--space-margin) var(--space-margin);
-	font-size: 13px;
-	animation: ai-toast-in .18s ease;
-}
-
-@keyframes ai-toast-in {
-	from {
-		opacity: 0;
-		transform: translateY(8px);
-	}
-
-	to {
-		opacity: 1;
-		transform: translateY(0);
-	}
-}
-
-.ai-toast-icon {
-	color: var(--colors-base-purple-6);
-	font-size: 16px;
-	flex-shrink: 0;
-	margin-top: 2px;
-}
-
-.ai-toast-text {
-	flex: 1;
-	line-height: 1.5;
-	color: var(--colors-neutral-text-color-text);
-
-	strong {
-		color: var(--colors-base-purple-6);
-	}
-}
-
-.ai-toast-sub {
-	margin-top: 2px;
-	font-size: 12px;
-	color: var(--colors-neutral-text-color-text-tertiary);
-}
-
-.ai-toast-close {
-	color: var(--colors-neutral-text-color-text-tertiary);
-	cursor: pointer;
-	font-size: 14px;
-
-	&:hover {
-		color: var(--colors-neutral-text-color-text);
-	}
-}
-</style>
