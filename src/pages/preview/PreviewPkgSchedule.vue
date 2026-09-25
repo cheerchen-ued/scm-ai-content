@@ -120,19 +120,19 @@
 								<div class="form-option d-flex">
 									<a-select
 										v-model:value="totalDuration.day"
-										placeholder="天"
+										placeholder="天數"
 										:disabled="aiState === 'panelOpen'"
 										style="width: 160px" />
 									<span>天</span>
 									<a-select
 										v-model:value="totalDuration.hour"
-										placeholder="時"
+										placeholder="時數"
 										:disabled="aiState === 'panelOpen'"
 										style="width: 160px" />
 									<span>時</span>
 									<a-select
 										v-model:value="totalDuration.minute"
-										placeholder="分"
+										placeholder="分數"
 										:disabled="aiState === 'panelOpen'"
 										style="width: 160px" />
 									<span>分</span>
