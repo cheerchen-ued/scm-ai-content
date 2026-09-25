@@ -220,11 +220,24 @@ export default {
 			if (!this.notifBatch.includes(fieldId)) {
 				this.notifBatch.push(fieldId);
 			}
-			const names = this.notifBatch.map(id => `「${AI_FIELD_META[id].label}」`).join('');
+			// 文案三欄位是「連動生成的其他欄位」，用「也幫你準備好…」框定為額外欄位（你正在做的那欄
+			// 會直接看到結果、不進通知）；行程管理是獨立生成、沒有連動的其他欄位，依 Figma node
+			// 2160:33356 用「已幫你準備好「行程介紹」了」＋更具體的前往指引。
+			const scheduleOnly = this.notifBatch.length === 1 && this.notifBatch[0] === 'productPkgSchedule';
+			let message;
+			let description;
+			if (scheduleOnly) {
+				message = '已幫你準備好「行程介紹」了';
+				description = '可點擊左側行程管理前往查看';
+			} else {
+				const names = this.notifBatch.map(id => `「${AI_FIELD_META[id].label}」`).join('');
+				message = `也幫你準備好${names}的建議了`;
+				description = '可點擊左側選單標記的節點前往查看';
+			}
 			notification.open({
 				key: NOTIF_KEY,
-				message: `已經幫你準備好${names}的建議`,
-				description: '可點擊左側選單標記的節點前往查看',
+				message,
+				description,
 				icon: h('span', {
 					style: 'display:inline-flex;color:#722ed1',
 					innerHTML: `<svg viewBox="0 0 16 16" width="24" height="24" fill="currentColor">${ICON_SPARKLE}</svg>`,
