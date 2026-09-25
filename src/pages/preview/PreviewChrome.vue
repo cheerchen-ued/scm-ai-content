@@ -413,7 +413,8 @@ export default {
 	flex: 1;
 	display: grid;
 	grid-template-columns: 210px 1fr auto;
-	grid-gap: var(--space-margin-xs);
+	// 依 Figma node 2130:61942：側欄／內容／提示卡三欄間距皆為 16px（--space-margin）
+	grid-gap: var(--space-margin);
 	padding: var(--space-margin);
 	align-items: stretch;
 }
@@ -545,8 +546,8 @@ export default {
 .page-footer-actions {
 	position: sticky;
 	bottom: 0;
-	margin-left: calc(var(--space-margin) + 210px + var(--space-margin-xs));
-	margin-right: calc(var(--space-margin) + var(--space-margin-xs) + 220px);
+	margin-left: calc(var(--space-margin) + 210px + var(--space-margin));
+	margin-right: calc(var(--space-margin) + var(--space-margin) + 300px);
 	height: 56px;
 	display: flex;
 	align-items: center;
@@ -559,7 +560,8 @@ export default {
 }
 
 .product-bubblehint-container {
-	width: 220px;
+	// 依 Figma node 2130:61942：右側提示卡寬 300px
+	width: 300px;
 
 	.bubble-hint-card {
 		position: sticky;
