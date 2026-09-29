@@ -85,28 +85,32 @@
 												<div>2. 內容由 AI 生成，僅供參考。請務必確認與實際提供之行程服務相符，如有落差請修改後再使用。</div>
 											</div>
 										</div>
-										<div class="gen-row">
+										<!-- 依 Figma node 2123:40548：按鈕列與「生成過久提示」同屬 action 區塊、上下緊貼
+										（提示只離按鈕 2px）；面板 16px 間距落在免責框與 action 之間，額度保留在按鈕列 -->
+										<div class="gen-action">
+											<div class="gen-row">
+												<div
+													v-if="sharedAiQuota"
+													class="quota-hint">
+													{{ quotaRemaining > 0 ? `今日額度 ${sharedAiQuota.used} / ${sharedAiQuota.limit}` : '今日生成次數已用完，請明天再試' }}
+												</div>
+												<a-button @click="aiState = 'idle'">
+													取消
+												</a-button>
+												<a-button
+													type="primary"
+													class="btn-ai"
+													:loading="generating"
+													:disabled="quotaRemaining === 0"
+													@click="generateSchedule">
+													產生建議
+												</a-button>
+											</div>
 											<div
 												v-if="showGeneratingHint"
-												class="quota-hint">
-												生成中...可先填寫其他欄位，完成後會通知您
+												class="gen-hint">
+												生成中...可先填寫其他節點欄位，不會影響這裡的動作，生成完成會通知您
 											</div>
-											<div
-												v-else-if="sharedAiQuota"
-												class="quota-hint">
-												{{ quotaRemaining > 0 ? `今日額度 ${sharedAiQuota.used} / ${sharedAiQuota.limit}` : '今日生成次數已用完，請明天再試' }}
-											</div>
-											<a-button @click="aiState = 'idle'">
-												取消
-											</a-button>
-											<a-button
-												type="primary"
-												class="btn-ai"
-												:loading="generating"
-												:disabled="quotaRemaining === 0"
-												@click="generateSchedule">
-												產生建議
-											</a-button>
 										</div>
 									</div>
 								</div>
@@ -629,6 +633,22 @@ export default {
 	text-align: right;
 	font-size: 14px;
 	color: var(--colors-neutral-text-color-text-secondary);
+}
+
+// 依 Figma node 2123:40548：action 區塊＝按鈕列＋提示上下相疊；面板 16px 間距落在
+// 免責框與 action 之間，action 內部不另加間距（提示靠自身 padding-top 只離按鈕 2px）
+.gen-action {
+	display: flex;
+	flex-direction: column;
+}
+
+// 生成過久提示：緊貼按鈕列下方（2px）、右對齊、次要灰字
+.gen-hint {
+	padding-top: 2px;
+	text-align: right;
+	font-size: 14px;
+	line-height: 22px;
+	color: var(--colors-neutral-text-color-text-tertiary);
 }
 
 .required {
