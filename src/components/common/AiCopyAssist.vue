@@ -182,8 +182,10 @@
 						show-count
 						placeholder="其他回饋" />
 					<div class="fb-submit-row">
-						<a-button @click="submitFeedback">
-							送出回饋
+						<a-button
+							:disabled="!canSubmitFeedback"
+							@click="submitFeedback">
+							送出
 						</a-button>
 					</div>
 				</template>
@@ -340,6 +342,10 @@ export default {
 		// 素材輸入畫面下方的 caption：固定顯示 AI 的價值訴求（優化結構、強化 SEO、提升曝光）
 		materialCaption() {
 			return 'AI 將自動優化內容結構，強化 SEO 效果，提升商品在搜尋結果中的曝光機會。';
+		},
+		// 不滿意原因的「送出」鍵：有選任一 chip 或有填其他回饋才可送出，否則 disabled
+		canSubmitFeedback() {
+			return this.feedback.reasons.length > 0 || !!this.feedback.text.trim();
 		},
 		// 即時比對「欄位現在的內容」跟哪一個建議一字不差：不是記錄「歷史上點過哪個」，
 		// 而是每次都重新比對，這樣使用者套用後若又編輯過、或整個刪掉，勾勾會自動消失，
