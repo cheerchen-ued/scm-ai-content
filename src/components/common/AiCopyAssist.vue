@@ -183,6 +183,12 @@
 						placeholder="其他回饋" />
 					<div class="fb-submit-row">
 						<a-button
+							type="text"
+							class="fb-skip-btn"
+							@click="skipFeedback">
+							略過
+						</a-button>
+						<a-button
 							:disabled="!canSubmitFeedback"
 							@click="submitFeedback">
 							送出
@@ -586,6 +592,11 @@ export default {
 			this.feedback.phase = 'thanks';
 			this.feedbackHandled = true;
 		},
+		// 略過：不填原因也照樣顯示「感謝你的回饋！」並標記已處理（依 Figma node 2123:40743）
+		skipFeedback() {
+			this.feedback.phase = 'thanks';
+			this.feedbackHandled = true;
+		},
 		// 素材面板/建議清單/回饋區塊展開收合時，用實際內容高度做平滑的展開動畫，
 		// 而不是直接跳轉；因為每個區塊內容高度都不固定（建議筆數、回饋階段不同），
 		// 沒辦法寫死一個 CSS 高度，所以量測 scrollHeight 再套用動畫。用 Web Animations
@@ -777,6 +788,11 @@ export default {
 	display: flex;
 	justify-content: flex-end;
 	gap: 8px;
+}
+
+// 略過：text 按鈕、深色文字（依 Figma node 2123:40743）
+.fb-skip-btn {
+	color: var(--colors-neutral-text-color-text);
 }
 
 .fb-thanks {
