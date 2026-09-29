@@ -337,26 +337,9 @@ export default {
 		quotaRemaining() {
 			return this.sharedAiQuota ? Math.max(this.sharedAiQuota.limit - this.sharedAiQuota.used, 0) : null;
 		},
-		// 「以下欄位會一同生成」的說明文字：只列出「其他」共用素材的欄位（不含自己，
-		// 因為上面的面板標題已經寫了目前是哪個欄位），依 Figma node 2108:26356 格式
-		// 寫成一句話，例如「商品亮點（STEP 1-2）、商品說明（STEP 5-1）欄位會一起
-		// 生成，到對應頁面即可查看與套用建議。」
-		otherFieldsSentence() {
-			const others = this.prepFields.filter(field => !(field.fieldId && field.fieldId === this.fieldId));
-			if (!others.length) return '';
-			const parts = others.map(field => {
-				const shortStep = (field.step || '').split(' · ')[0];
-				return shortStep ? `${field.label}（${shortStep}）` : field.label;
-			});
-			return `${parts.join('、')}欄位會一起生成，到對應頁面即可查看與套用建議。`;
-		},
-		// 素材輸入畫面下方的 caption，就是 otherFieldsSentence 本身——依 Figma node
-		// 2108:26356 實際核對過的「填寫素材」畫面，caption 固定顯示這句「其他欄位會
-		// 一起生成」的提示，不會因為素材有沒有內容而換成別的文字，不要自己延伸出一套
-		// 「有內容就切換提示」的邏輯（那是另一個「輸入框內建 AI」實驗版面才有確認過
-		// 的行為，這裡沒有對應的設計稿依據）。
+		// 素材輸入畫面下方的 caption：固定顯示 AI 的價值訴求（優化結構、強化 SEO、提升曝光）
 		materialCaption() {
-			return this.otherFieldsSentence;
+			return 'AI 將自動優化內容結構，強化 SEO 效果，提升商品在搜尋結果中的曝光機會。';
 		},
 		// 即時比對「欄位現在的內容」跟哪一個建議一字不差：不是記錄「歷史上點過哪個」，
 		// 而是每次都重新比對，這樣使用者套用後若又編輯過、或整個刪掉，勾勾會自動消失，

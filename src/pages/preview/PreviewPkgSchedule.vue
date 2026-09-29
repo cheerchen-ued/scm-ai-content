@@ -87,12 +87,7 @@
 										</div>
 										<div class="gen-row">
 											<div
-												v-if="showGeneratingHint"
-												class="quota-hint">
-												生成中...可先填寫其他欄位，完成後會通知您
-											</div>
-											<div
-												v-else-if="sharedAiQuota"
+												v-if="sharedAiQuota"
 												class="quota-hint">
 												{{ quotaRemaining > 0 ? `今日額度 ${sharedAiQuota.used} / ${sharedAiQuota.limit}` : '今日生成次數已用完，請明天再試' }}
 											</div>
@@ -107,6 +102,13 @@
 												@click="generateSchedule">
 												產生建議
 											</a-button>
+										</div>
+										<!-- 依 Figma node 2123:40548：生成過久的提示移到按鈕列「下方」獨立一行，
+										額度保留在按鈕列不被取代 -->
+										<div
+											v-if="showGeneratingHint"
+											class="gen-hint">
+											生成中...可先填寫其他節點欄位，不會影響這裡的動作，生成完成會通知您
 										</div>
 									</div>
 								</div>
@@ -629,6 +631,15 @@ export default {
 	text-align: right;
 	font-size: 14px;
 	color: var(--colors-neutral-text-color-text-secondary);
+}
+
+// 依 Figma node 2123:40548：生成過久提示，位於按鈕列下方、右對齊、次要灰字
+.gen-hint {
+	padding-top: 2px;
+	text-align: right;
+	font-size: 14px;
+	line-height: 22px;
+	color: var(--colors-neutral-text-color-text-tertiary);
 }
 
 .required {
