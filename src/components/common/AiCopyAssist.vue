@@ -555,7 +555,7 @@ export default {
 				if (this.fieldId && this.sharedAiActions) {
 					this.sharedAiActions.generated(this.fieldId);
 				}
-			}, 1200);
+			}, 2500);
 		},
 		apply(text) {
 			const plainText = text.replace(/<[^>]+>/g, '');

@@ -712,7 +712,7 @@ export default {
 				if (this.sharedAiActions) {
 					this.sharedAiActions.generated('productDescription');
 				}
-			}, 1200);
+			}, 2500);
 		},
 		// 套用建議：不管是從取代編輯器中的 ready、還是從下方的 readyBelow 清單點的，
 		// 都是同一個動作——編輯器變回原樣、寫入套用的文案、顯示回饋
