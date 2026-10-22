@@ -7,17 +7,13 @@
 			class="ai-trigger"
 			:class="{ inline, active: isPanelActive }"
 			@click="handleTriggerClick">
-			<template v-if="isGeneratingThisField && state !== 'panelOpen'">
-				<span class="ai-trigger-dot" />
-				生成中...
-			</template>
-			<template v-else>
-				<svg
-					viewBox="0 0 16 16"
-					fill="currentColor"
-					v-html="icons.sparkle" />
-				AI 潤稿
-			</template>
+			<svg
+				viewBox="0 0 16 16"
+				fill="currentColor"
+				class="trigger-icon"
+				:class="{ blink: isGeneratingThisField && state !== 'panelOpen' }"
+				v-html="icons.sparkle" />
+			{{ isGeneratingThisField && state !== 'panelOpen' ? '生成中...' : 'AI 潤稿' }}
 		</div>
 
 		<transition
@@ -71,6 +67,11 @@
 						@click="generate">
 						產生內容
 					</a-button>
+				</div>
+				<div
+					v-if="showGeneratingHint && state === 'panelOpen'"
+					class="generating-hint">
+					生成中...可先填寫其他節點欄位，不會影響這裡的動作，生成完成會通知您
 				</div>
 			</div>
 		</transition>
@@ -318,6 +319,10 @@ export default {
 			// 是否已經在本機生成過一次建議（給沒有 fieldId/共用狀態的正式頁面用的本機記憶）
 			hasGeneratedOnce: false,
 			generating: false,
+			// 生成超過 3 秒才顯示的提示文案（依 Figma node 2431:54296），避免正常的快速生成
+			// 也瞬間閃過這段文字
+			showGeneratingHint: false,
+			generatingHintTimer: null,
 			// 每則建議卡的文字是否超出 240px 上限（實際量測 scrollHeight），超出的才顯示
 			// 卡片下緣的漸層提示，讓使用者知道還能往下捲，不是每張卡都套用
 			suggOverflowFlags: [],
@@ -546,11 +551,18 @@ export default {
 			this.generating = true;
 			// 新一輪生成：重置回饋，生成好後才會依規則重新彈出
 			this.resetFeedbackForNewGeneration();
+			this.showGeneratingHint = false;
+			clearTimeout(this.generatingHintTimer);
+			this.generatingHintTimer = setTimeout(() => {
+				this.showGeneratingHint = true;
+			}, 3000);
 			if (this.fieldId && this.sharedAiActions) {
 				this.sharedAiActions.generating(this.fieldId);
 			}
 			setTimeout(() => {
 				this.generating = false;
+				this.showGeneratingHint = false;
+				clearTimeout(this.generatingHintTimer);
 				this.state = 'ready';
 				if (this.fieldId && this.sharedAiActions) {
 					this.sharedAiActions.generated(this.fieldId);
@@ -704,19 +716,14 @@ export default {
 	}
 }
 
-// 生成中的入口鈕：跟 sidemenu 的灰點閃爍是同一套視覺語言（同樣的顏色跟動畫），
-// 讓使用者不管是看側邊欄還是看這顆鈕，都認得出「這是同一件事還在進行中」。
-.ai-trigger-dot {
-	display: inline-block;
-	width: 6px;
-	height: 6px;
-	flex-shrink: 0;
-	border-radius: 50%;
-	background: var(--colors-neutral-text-color-text-quaternary);
-	animation: ai-trigger-dot-blink 1s ease-in-out infinite;
+// 生成中的入口鈕：依 Figma node 2431:54513 核對過的實際規格——圖示維持原本的星芒圖示
+// 不變（不是換成一顆灰點），只是文字改成「生成中...」、圖示本身加上跟 sidemenu 灰點
+// 同一套閃爍動畫（我原本做成另外長出一顆灰點、把圖示整個換掉，是看錯設計稿）。
+.trigger-icon.blink {
+	animation: ai-trigger-icon-blink 1s ease-in-out infinite;
 }
 
-@keyframes ai-trigger-dot-blink {
+@keyframes ai-trigger-icon-blink {
 	0%,
 	100% {
 		opacity: 1;
@@ -907,6 +914,15 @@ export default {
 	text-align: right;
 	font-size: 14px;
 	color: var(--colors-neutral-text-color-text);
+}
+
+// 生成超過 3 秒才出現的提示，依 Figma node 2431:54296：緊接在按鈕列下方、靠右對齊。
+.generating-hint {
+	margin-top: var(--space-margin-xxs);
+	text-align: right;
+	font-size: 14px;
+	line-height: 1.55;
+	color: var(--colors-neutral-text-color-text-tertiary);
 }
 
 .ai-ready-block {

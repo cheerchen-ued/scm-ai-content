@@ -169,6 +169,11 @@
 								產生內容
 							</a-button>
 						</div>
+						<div
+							v-if="showGeneratingHint && composeState === 'generating'"
+							class="generating-hint">
+							生成中...可先填寫其他節點欄位，不會影響這裡的動作，生成完成會通知您
+						</div>
 						<template v-if="composeState === 'ready'">
 							<div class="compose-suggestions">
 								<button
@@ -384,6 +389,10 @@ export default {
 			composeDraft: '',
 			// 是否已經生成過一次建議；決定點觸發鈕時要不要直接跳 readyBelow
 			hasGeneratedOnce: false,
+			// 生成超過 3 秒才顯示的提示文案（依 Figma node 2431:54296），跟 AiCopyAssist.vue
+			// 是同一套邏輯
+			showGeneratingHint: false,
+			generatingHintTimer: null,
 			// 套用建議後的輕量回饋機制，跟 AiCopyAssist.vue 是同一套邏輯（這個版面沒有共用元件
 			// 可以直接拿，複製一份過來）
 			feedback: {
@@ -489,6 +498,11 @@ export default {
 		triggerComposeGenerate() {
 			if (this.composeState === 'generating') return;
 			this.composeState = 'generating';
+			this.showGeneratingHint = false;
+			clearTimeout(this.generatingHintTimer);
+			this.generatingHintTimer = setTimeout(() => {
+				this.showGeneratingHint = true;
+			}, 3000);
 			if (this.sharedAiMaterial) {
 				this.sharedAiMaterial.text = this.composeDraft;
 			}
@@ -498,6 +512,8 @@ export default {
 			setTimeout(() => {
 				this.composeState = 'ready';
 				this.hasGeneratedOnce = true;
+				this.showGeneratingHint = false;
+				clearTimeout(this.generatingHintTimer);
 				if (this.sharedAiActions) {
 					this.sharedAiActions.generated('productBasicInfo');
 				}
@@ -774,6 +790,15 @@ export default {
 	text-align: right;
 	font-size: 14px;
 	color: var(--colors-neutral-text-color-text);
+}
+
+// 生成超過 3 秒才出現的提示，依 Figma node 2431:54296：緊接在按鈕列下方、靠右對齊。
+.generating-hint {
+	margin-top: var(--space-margin-xxs);
+	text-align: right;
+	font-size: 14px;
+	line-height: 1.55;
+	color: var(--colors-neutral-text-color-text-tertiary);
 }
 
 // 依 Figma node 2109:38071（再次點擊 ai，保留先前建議）：欄位維持純輸入框，這塊
