@@ -5,13 +5,19 @@
 		<div
 			v-if="inline || state === 'idle'"
 			class="ai-trigger"
-			:class="{ inline, expanded: state !== 'idle' }"
+			:class="{ inline, active: isPanelActive }"
 			@click="handleTriggerClick">
-			<svg
-				viewBox="0 0 16 16"
-				fill="currentColor"
-				v-html="icons.sparkle" />
-			AI 潤稿
+			<template v-if="isGeneratingThisField && state !== 'panelOpen'">
+				<span class="ai-trigger-dot" />
+				生成中...
+			</template>
+			<template v-else>
+				<svg
+					viewBox="0 0 16 16"
+					fill="currentColor"
+					v-html="icons.sparkle" />
+				AI 潤稿
+			</template>
 		</div>
 
 		<transition
@@ -285,9 +291,9 @@ export default {
 			type: Boolean,
 			default: false,
 		},
-		// 選填：建議清單改用「雙欄橫排」呈現（依 Figma node 2138:37559 商品說明的顯示建議
-		// 區塊：因內容較長改由橫式並排，每張卡片 max-height 480、超過內文可捲動）。只有
-		// 商品說明頁會傳入，其餘欄位維持單欄直式。
+		// 選填：建議清單改用「雙欄橫排」呈現（依 Figma node 2138:37559／2131:68272——商品說明
+		// 的顯示建議區塊：因內容較長改由橫式並排，每張卡片 max-height 480、超過內文可捲動）。
+		// 只有商品說明頁會傳入，其餘欄位維持單欄直式。
 		wideSuggestions: {
 			type: Boolean,
 			default: false,
@@ -336,6 +342,12 @@ export default {
 	computed: {
 		externalStatus() {
 			return this.fieldId && this.sharedAiStatus ? this.sharedAiStatus[this.fieldId] : null;
+		},
+		// 這個欄位現在是不是正在生成：自己觸發的（generating）或透過共用素材連動、
+		// 別的欄位觸發後這裡也在背景生成（externalStatus === 'generating'）都算。
+		// 跟 sidemenu 的灰點閃爍是同一個判斷依據，入口鈕要能反映同一件事。
+		isGeneratingThisField() {
+			return this.generating || this.externalStatus === 'generating';
 		},
 		// 這個欄位是不是已經有「準備好的建議」可以看：本機生成過，或者透過共用素材連動、
 		// 或整頁重新整理後由 externalStatus 得知已經生成/套用過，都算
@@ -684,10 +696,34 @@ export default {
 		flex-shrink: 0;
 	}
 
-	// Panel 展開時（依 Figma node 2142:59823）：觸發鍵背景由 purple-1 加深為 purple-2
-	// 標示「作用中」；邊框／文字／圖示維持不變。
-	&.expanded {
+	// 面板／建議清單展開時的樣式，依 Figma node 2142:59823（「AI 潤稿按鈕」Panel 收合／
+	// 展開對照稿）核對過的實際規格：只有底色從 purple-1 加深到 purple-2，邊框維持
+	// purple-3 不變（不是我原本猜的加深到 purple-4）。
+	&.active {
 		background: var(--colors-base-purple-2);
+	}
+}
+
+// 生成中的入口鈕：跟 sidemenu 的灰點閃爍是同一套視覺語言（同樣的顏色跟動畫），
+// 讓使用者不管是看側邊欄還是看這顆鈕，都認得出「這是同一件事還在進行中」。
+.ai-trigger-dot {
+	display: inline-block;
+	width: 6px;
+	height: 6px;
+	flex-shrink: 0;
+	border-radius: 50%;
+	background: var(--colors-neutral-text-color-text-quaternary);
+	animation: ai-trigger-dot-blink 1s ease-in-out infinite;
+}
+
+@keyframes ai-trigger-dot-blink {
+	0%,
+	100% {
+		opacity: 1;
+	}
+
+	50% {
+		opacity: .25;
 	}
 }
 
@@ -943,6 +979,22 @@ export default {
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
+
+	// 依 Figma node 2131:68272：文案較長、怕生成耗時的欄位改成並排兩張卡片，
+	// 每張等寬、捲動高度上限拉高到 480px（而不是垂直堆疊時的 140px）。
+	&.columns {
+		flex-direction: row;
+		align-items: stretch;
+
+		.sugg-card {
+			flex: 1;
+			min-width: 0;
+		}
+
+		.sugg-text {
+			max-height: 480px;
+		}
+	}
 }
 
 // 商品說明的顯示建議區塊：依 Figma node 2138:37559，因內容較長改雙欄橫排（等寬），

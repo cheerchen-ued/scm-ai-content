@@ -74,12 +74,15 @@
 													<reload-outlined />
 													重新生成
 												</span>
-												<close-outlined
-													class="arb-close"
-													@click="closeReadyBelow" />
+												<span
+													class="arb-link"
+													@click="closeReadyBelow">
+													<up-outlined />
+													收合
+												</span>
 											</span>
 										</div>
-										<div class="compose-suggestions">
+										<div class="compose-suggestions columns">
 											<button
 												v-for="(text, i) in aiProdDescSuggestions"
 												:key="i"
@@ -157,7 +160,7 @@
 									</a-button>
 								</div>
 								<template v-if="composeState === 'ready'">
-									<div class="compose-suggestions">
+									<div class="compose-suggestions columns">
 										<button
 											v-for="(text, i) in aiProdDescSuggestions"
 											:key="i"
@@ -199,13 +202,13 @@
 											<a-button
 												class="fb-btn"
 												@click="markSatisfied">
-												<smile-two-tone />
+												<smile-outlined />
 												滿意
 											</a-button>
 											<a-button
 												class="fb-btn"
 												@click="markUnsatisfied">
-												<frown-two-tone />
+												<frown-outlined />
 												不滿意
 											</a-button>
 										</span>
@@ -468,7 +471,7 @@
 import {
 	DownOutlined, PlusOutlined, DeleteOutlined, MenuOutlined,
 	UnorderedListOutlined, OrderedListOutlined, LinkOutlined,
-	ExclamationCircleFilled, CheckOutlined, CloseOutlined, ReloadOutlined, SmileTwoTone, FrownTwoTone,
+	ExclamationCircleFilled, CheckOutlined, UpOutlined, ReloadOutlined, SmileOutlined, FrownOutlined,
 } from '@ant-design/icons-vue';
 import AiCopyAssist from 'components/common/AiCopyAssist';
 
@@ -507,10 +510,10 @@ export default {
 		LinkOutlined,
 		ExclamationCircleFilled,
 		CheckOutlined,
-		CloseOutlined,
+		UpOutlined,
 		ReloadOutlined,
-		SmileTwoTone,
-		FrownTwoTone,
+		SmileOutlined,
+		FrownOutlined,
 		AiCopyAssist,
 	},
 	// 實驗性版面切換（見 PreviewChrome 的開關）：'current' 是目前上線的版本，不用理會這個 context
@@ -563,6 +566,9 @@ export default {
 				text: '',
 			},
 			feedbackReasonOptions: FEEDBACK_REASON_OPTIONS,
+			// 商品說明文案篇幅較長，怕生成耗時，依 Figma node 2131:68272 預設只出兩則
+			// （不是像商品名稱/商品亮點那樣的三則），並排顯示、捲動高度上限拉高到 480px
+			// （見 .compose-suggestions.columns 樣式）。
 			aiProdDescSuggestions: [
 				'築地市場是東京最具代表性的海鮮市場之一，這趟行程將由在地嚮導帶領，穿梭於熱鬧的場外市場，認識當令漁獲與職人文化，最後在市場內的老字號壽司店享用職人現捏的握壽司早餐，感受東京清晨最鮮活的一面。\n\n' +
 					'清晨五點半於築地站集合後，嚮導會先介紹市場的歷史沿革，從戰前的日本橋魚河岸，到遷移至築地、再到豐洲場內市場的變遷，讓旅客在走入市場前先建立起完整的脈絡。接著會依序走訪鮪魚競標區的外圍觀摩點、' +
@@ -1029,24 +1035,27 @@ export default {
 	}
 }
 
-.arb-close {
-	font-size: 14px;
-	color: var(--colors-neutral-text-color-text-tertiary);
-	cursor: pointer;
-	padding: 5px;
-	border-radius: var(--border-radius);
-
-	&:hover {
-		background: rgba(0, 0, 0, 0.04);
-		color: var(--colors-neutral-text-color-text);
-	}
-}
-
 // 建議清單：垂直堆疊的卡片，跟商品名稱那版共用同一套樣式。
 .compose-suggestions {
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
+
+	// 依 Figma node 2131:68272：商品說明文案較長、怕生成耗時，預設只出兩則、並排
+	// 顯示（不是像商品名稱/商品亮點那樣垂直堆疊），捲動高度上限也拉高到 480px。
+	&.columns {
+		flex-direction: row;
+		align-items: stretch;
+
+		.compose-sugg-card {
+			flex: 1;
+			min-width: 0;
+		}
+
+		.compose-sugg-text {
+			max-height: 480px;
+		}
+	}
 }
 
 .compose-sugg-card {

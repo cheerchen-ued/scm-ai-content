@@ -84,9 +84,12 @@
 											<reload-outlined />
 											重新生成
 										</span>
-										<close-outlined
-											class="arb-close"
-											@click="closeReadyBelow" />
+										<span
+											class="arb-link"
+											@click="closeReadyBelow">
+											<up-outlined />
+											收合
+										</span>
 									</span>
 								</div>
 								<div class="compose-suggestions">
@@ -205,13 +208,13 @@
 									<a-button
 										class="fb-btn"
 										@click="markSatisfied">
-										<smile-two-tone />
+										<smile-outlined />
 										滿意
 									</a-button>
 									<a-button
 										class="fb-btn"
 										@click="markUnsatisfied">
-										<frown-two-tone />
+										<frown-outlined />
 										不滿意
 									</a-button>
 								</span>
@@ -299,7 +302,7 @@
 
 <script>
 import {
-	ExclamationCircleFilled, CheckOutlined, CloseOutlined, ReloadOutlined, SmileTwoTone, FrownTwoTone,
+	ExclamationCircleFilled, CheckOutlined, UpOutlined, ReloadOutlined, SmileOutlined, FrownOutlined,
 } from '@ant-design/icons-vue';
 import AiCopyAssist from 'components/common/AiCopyAssist';
 
@@ -332,10 +335,10 @@ export default {
 		AiCopyAssist,
 		ExclamationCircleFilled,
 		CheckOutlined,
-		CloseOutlined,
+		UpOutlined,
 		ReloadOutlined,
-		SmileTwoTone,
-		FrownTwoTone,
+		SmileOutlined,
+		FrownOutlined,
 	},
 	// 實驗性版面切換（見 PreviewChrome 的開關）：'current' 是目前上線的版本，不用理會這個 context
 	inject: {
@@ -819,19 +822,6 @@ export default {
 
 	&:hover {
 		background: rgba(0, 0, 0, 0.04);
-	}
-}
-
-.arb-close {
-	font-size: 14px;
-	color: var(--colors-neutral-text-color-text-tertiary);
-	cursor: pointer;
-	padding: 5px;
-	border-radius: var(--border-radius);
-
-	&:hover {
-		background: rgba(0, 0, 0, 0.04);
-		color: var(--colors-neutral-text-color-text);
 	}
 }
 
